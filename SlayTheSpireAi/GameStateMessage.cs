@@ -9,6 +9,5 @@ namespace SlayTheSpireAi
 
         [JsonProperty(PropertyName = "game_state")]
         public GameState GameState { get; set; }
-
     }
 }

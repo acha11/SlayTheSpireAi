@@ -11,7 +11,12 @@ namespace SlayTheSpireAi
         Defend_Buff,
         Attack_Defend,
         Attack_Debuff,
-        // I saw this once on a Cultist on the first floor, first turn
+        Sleep,
+        Stun,
+        Strong_Debuff,
+        // "DEBUG" seems to be an interim state that the comms layer mistakenly treats as final & passes on to me
+        // in some cases. When it appears, I manually request a state update and it disappears, replaced with the
+        // actual intent.
         Debug
     }
 
@@ -22,11 +27,9 @@ namespace SlayTheSpireAi
             get
             {
                 return
-                    //Intent == MonsterIntents.Attack ||
-                    //Intent == MonsterIntents.Attack_Defend ||
-                    //Intent == MonsterIntents.Attack_Debuff ||
-                    // Not using intent because I've seen "DEBUG" come back as the monster intent.
-                    (MoveHits > 0 && MoveAdjustedDamage > 0);
+                    Intent == MonsterIntents.Attack ||
+                    Intent == MonsterIntents.Attack_Defend ||
+                    Intent == MonsterIntents.Attack_Debuff;
             }
         }
 

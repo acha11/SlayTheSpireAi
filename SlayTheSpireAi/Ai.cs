@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Mail;
 using System.Security.Cryptography.X509Certificates;
@@ -44,30 +45,57 @@ namespace SlayTheSpireAi
                 // After choosing, we're offered just the one option: leave
                 ExpectAndChooseChoice("leave");
 
-                // Now, we're on the map screen & offered rooms. Just choose the first so we can get in a fight.
-                // This will fail if the first one happens to be a question mark.
-                Send(new ChooseCommand(choiceIndex: 0));
-
-                // Now, we're probably in combat.
-                if (_lastGameStateMessage?.GameState?.RoomPhase != "COMBAT")
-                {
-                    throw new Exception("Not in combat. Probably the first room wasn't a combat, somehow?");
-                }
-
                 while (true)
                 {
-                    RunCombat();
+                    // Now, we're on the map screen & offered rooms. Just choose the first so we can get in a fight.
+                    // This will fail if the first offered room happens to be a question mark.
+                    Send(new ChooseCommand(choiceIndex: 0));
 
-                    switch (_lastGameStateMessage.GameState.RoomPhase)
+                    // Now, we're probably in combat.
+                    switch (_lastGameStateMessage.GameState.ScreenType)
                     {
-                        case "COMPLETE":
-                            // Win. Take gold, ignore card.
-                            Send(new ChooseCommand(choiceName: "gold"));
+                        case "EVENT":
+                            HandleEventScreen();
 
+                            break;
+                        case "NONE":
+                            RunCombat();
+
+                            break;
+
+                        default:
+                            // Shops come this way.
                             Send(new ProceedCommand());
 
                             break;
                     }
+                }
+            }
+        }
+
+        void HandleEventScreen()
+        {
+            _logger.Log("Event");
+
+            if (_lastGameStateMessage.AvailableCommands.Contains("proceed"))
+            {
+                _logger.Log("Sending proceed");
+
+                Send(new ProceedCommand());
+            }
+            else
+            {
+                if (_lastGameStateMessage.GameState.ChoiceList.Contains("leave"))
+                {
+                    _logger.Log("Choosing leave");
+
+                    Send(new ChooseCommand(null, "leave"));
+                }
+                else
+                {
+                    _logger.Log("Choosing choice #0");
+
+                    Send(new ChooseCommand(0));
                 }
             }
         }
@@ -86,7 +114,7 @@ namespace SlayTheSpireAi
 
             int turnNumber = 0;
 
-            while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
+            while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT" && _lastGameStateMessage?.GameState?.ScreenType != "GAME_OVER")
             {
                 WaitForMonsterIntentsToBeValid();
 
@@ -143,6 +171,26 @@ namespace SlayTheSpireAi
                 if (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
                 {
                     Send(new EndCommand());
+                }
+            }
+
+            // Handle reward (or death?)
+            if (_lastGameStateMessage.GameState.RoomPhase == "COMPLETE")
+            {
+                // Win. Take gold, ignore card.
+                Send(new ChooseCommand(choiceName: "gold"));
+
+                Send(new ProceedCommand());
+            }
+            else
+            {
+                if (_lastGameStateMessage?.GameState?.ScreenType == "GAME_OVER")
+                {
+                    Send(new ProceedCommand());
+                }
+                else
+                {
+                    throw new Exception("Indeterminate combat outcome.");
                 }
             }
         }

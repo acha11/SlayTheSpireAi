@@ -11,5 +11,9 @@ namespace SlayTheSpireAi
         public CombatState CombatState { get; set; }
         [JsonProperty(PropertyName = "room_phase")]
         public string RoomPhase { get; set; }
+
+        [JsonProperty(PropertyName = "screen_type")]
+        public string ScreenType { get; set; }
+
     }
 }
