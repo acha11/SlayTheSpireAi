@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Mail;
 using System.Security.Cryptography.X509Certificates;
@@ -31,7 +32,7 @@ namespace SlayTheSpireAi
             // Indicate that we're ready
             SendRaw("ready");
 
-            Send(new StartCommand("silent", 1, null));
+            Send(new StartCommand("ironclad", 1, null));
 
             if (_lastGameStateMessage?.GameState?.ChoiceList != null)
             {
@@ -120,58 +121,9 @@ namespace SlayTheSpireAi
 
                 _logger.Log($"Turn {++turnNumber}");
 
-                _logger.Log("Phase 1: block until it's no longer possible or no longer necessary");
+                // BlockAndStrikeStrategy();
 
-                // First, block until we are blocking more than the incoming damage, or we can't block any more, or the fight is over
-                while (_combatState.Player.Energy > 0 && CalculateIncomingDamage() > _combatState.Player.Block && _lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
-                {
-                    _logger.Log("Looking for a block card");
-
-                    var bestBlockCard = _combatState.Hand.FirstOrDefault(x => x.Name == "Defend" && x.Cost <= _combatState.Player.Energy);
-
-                    if (bestBlockCard == null)
-                    {
-                        _logger.Log("No block card found.");
-
-                        break;
-                    }
-
-                    _logger.Log($"Playing card {bestBlockCard.Uuid}");
-
-                    Play(bestBlockCard);
-                }
-
-                _logger.Log("Phase 2: attack");
-
-                // Now, attack until we can't, or the fight ends
-                while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
-                {
-                    _logger.Log("Looking for an attack card");
-
-                    var bestAttackCard = _combatState.Hand.FirstOrDefault(x => x.Name == "Strike" && x.Cost <= _combatState.Player.Energy);
-
-                    if (bestAttackCard == null)
-                    {
-                        _logger.Log("No attack card found.");
-
-                        break;
-                    }
-
-                    _logger.Log($"Playing card {bestAttackCard.Uuid}");
-
-                    // Choose a monster to attack
-                    var target = _combatState.Monsters.FirstOrDefault(x => !x.IsGone);
-
-                    _logger.Log($"Chose monster: " + target.Name);
-
-                    Play(bestAttackCard, Array.IndexOf(_combatState.Monsters, target));
-                }
-
-                // If we're still in combat, end our turn
-                if (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
-                {
-                    Send(new EndCommand());
-                }
+                PlannedStrategy();
             }
 
             // Handle reward (or death?)
@@ -192,6 +144,184 @@ namespace SlayTheSpireAi
                 {
                     throw new Exception("Indeterminate combat outcome.");
                 }
+            }
+        }
+
+        void PlannedStrategy()
+        {
+            ActionGenerator ag = new ActionGenerator();
+
+            var sgs = EvaluateActionsUnderGameState(ag, _lastGameStateMessage.GameState, 0);
+
+            var action = FindActionWithBestSubscore(sgs, 1);
+
+            _logger.Log("Playing " + JsonConvert.SerializeObject(action.Precondition));
+
+            Send(action.Precondition.ConvertToCommand(_lastGameStateMessage.GameState));
+        }
+
+        private ScoredGameState FindActionWithBestSubscore(List<ScoredGameState> sgs, int depth)
+        {
+            float bestScoreSoFar = float.MinValue;
+            ScoredGameState bestSgsSoFar = null;
+
+            foreach (var gs in sgs)
+            {
+                float score = 0;
+
+                if (!gs.Children.Any())
+                {
+                    _logger.Log("".PadLeft(depth * 3) + gs.Precondition.ToString() + ": " + gs.Score);
+                    score = gs.Score;
+                }
+                else
+                {
+                    _logger.Log("".PadLeft(depth * 3) + gs.Precondition.ToString() + ": has children");
+
+                    score = FindActionWithBestSubscore(gs.Children, depth + 1).BestScoreOfLeafNodes;
+                }
+
+                gs.BestScoreOfLeafNodes = score;
+
+                _logger.Log("".PadLeft(depth * 3, '!') + "scored " + score);
+
+                if (score > bestScoreSoFar)
+                {
+                    _logger.Log("".PadLeft(depth * 3, '@') + "that's an improvement. " + score);
+
+                    bestScoreSoFar = score;
+                    bestSgsSoFar = gs;
+                }
+            }
+            
+            _logger.Log("".PadLeft(depth * 3, '#') + " group done. bestscore " + bestScoreSoFar);
+
+            return bestSgsSoFar;
+        }
+
+        class ScoredGameState
+        {
+            public IAction Precondition { get; set; }
+            public GameState GameState { get; set; }
+            public float Score { get; set; }
+
+            public List<ScoredGameState> Children { get; set; }
+            public float BestScoreOfLeafNodes { get; internal set; }
+        }
+
+        List<ScoredGameState> EvaluateActionsUnderGameState(ActionGenerator ag, GameState gameState, int depth)
+        {
+            var scoredGameStates = new List<ScoredGameState>();
+
+            var actions = ag.GenerateActions(gameState);
+
+            foreach (var action in actions)
+            {
+                var result = action.ApplyTo(_logger, gameState);
+
+                var sgs =
+                    new ScoredGameState()
+                    {
+                        Precondition = action,
+                        GameState = result,
+                        Score = ScoreGameState(result),
+                        Children = new List<ScoredGameState>()
+                    };
+
+                _logger.Log("!".PadLeft(3 * depth) + "Action " + sgs.Precondition.ToString() + ": " + sgs.Score);
+
+                if (!(action is EndTurnAction))
+                {
+                    var children = EvaluateActionsUnderGameState(ag, result, depth + 1);
+
+                    foreach (var child in children)
+                    {
+                        sgs.Children.Add(child);
+                    }
+                }
+
+                scoredGameStates.Add(sgs);
+            }
+
+            return scoredGameStates;
+        }
+
+        private float ScoreGameState(GameState result)
+        {
+            float score = 0;
+
+            // Score 20 for each defeated monster
+            score += 20 * result.CombatState.Monsters.Where(x => x.CurrentHp == 0).Count();
+
+            // S
+
+            // Score -bignumber for dead player
+
+            if (result.CombatState.Player.CurrentHp == 0)
+            {
+                score -= 1000000;
+            }
+
+            score += result.CombatState.Player.CurrentHp * 20;
+
+            score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
+
+            return score;
+        }
+
+        private void BlockAndStrikeStrategy()
+        {
+            _logger.Log("Phase 1: block until it's no longer possible or no longer necessary");
+
+            // First, block until we are blocking more than the incoming damage, or we can't block any more, or the fight is over
+            while (_combatState.Player.Energy > 0 && CalculateIncomingDamage() > _combatState.Player.Block && _lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
+            {
+                _logger.Log("Looking for a block card");
+
+                var bestBlockCard = _combatState.Hand.FirstOrDefault(x => x.Name == "Defend" && x.Cost <= _combatState.Player.Energy);
+
+                if (bestBlockCard == null)
+                {
+                    _logger.Log("No block card found.");
+
+                    break;
+                }
+
+                _logger.Log($"Playing card {bestBlockCard.Uuid}");
+
+                Play(bestBlockCard);
+            }
+
+            _logger.Log("Phase 2: attack");
+
+            // Now, attack until we can't, or the fight ends
+            while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
+            {
+                _logger.Log("Looking for an attack card");
+
+                var bestAttackCard = _combatState.Hand.FirstOrDefault(x => x.Name == "Strike" && x.Cost <= _combatState.Player.Energy);
+
+                if (bestAttackCard == null)
+                {
+                    _logger.Log("No attack card found.");
+
+                    break;
+                }
+
+                _logger.Log($"Playing card {bestAttackCard.Uuid}");
+
+                // Choose a monster to attack
+                var target = _combatState.Monsters.FirstOrDefault(x => !x.IsGone);
+
+                _logger.Log($"Chose monster: " + target.Name);
+
+                Play(bestAttackCard, Array.IndexOf(_combatState.Monsters, target));
+            }
+
+            // If we're still in combat, end our turn
+            if (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
+            {
+                Send(new EndCommand());
             }
         }
 

@@ -14,6 +14,8 @@ namespace SlayTheSpireAi
         Sleep,
         Stun,
         Strong_Debuff,
+        Unknown,
+
         // "DEBUG" seems to be an interim state that the comms layer mistakenly treats as final & passes on to me
         // in some cases. When it appears, I manually request a state update and it disappears, replaced with the
         // actual intent.
@@ -49,7 +51,11 @@ namespace SlayTheSpireAi
         public string Name { get; set; }
 
         [JsonProperty(PropertyName = "current_hp")]
-        public int CurrentHp{ get; set; }
+        public int CurrentHp { get; set; }
+        [JsonProperty(PropertyName = "max_hp")]
+        public int MaxHp { get; set; }
+
+
 
         public int Block { get; set; }
 

@@ -15,5 +15,9 @@ namespace SlayTheSpireAi
         [JsonProperty(PropertyName = "screen_type")]
         public string ScreenType { get; set; }
 
+        public GameState Clone()
+        {
+            return JsonConvert.DeserializeObject<GameState>(JsonConvert.SerializeObject(this));
+        }
     }
 }

@@ -14,5 +14,8 @@ namespace SlayTheSpireAi
         public string Name { get; set; }
 
         public Guid Uuid { get; set; }
+
+        [JsonProperty(PropertyName = "has_target")]
+        public bool HasTarget { get; set; }
     }
 }

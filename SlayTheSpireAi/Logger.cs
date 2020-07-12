@@ -25,7 +25,7 @@ namespace SlayTheSpireAi
 
         public void Log(string s)
         {
-            File.AppendAllLines(_logPath, new string[] { s });
+            //File.AppendAllLines(_logPath, new string[] { s });
         }
     }
 }
