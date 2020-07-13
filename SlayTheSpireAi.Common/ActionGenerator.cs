@@ -156,7 +156,22 @@ namespace SlayTheSpireAi
 
         void ApplyVulnerableToMonster(Monster monster)
         {
-            // Notimplemented
+            IncrementPower(monster.Powers, "Vulnerable");
+        }
+
+        void IncrementPower(List<Power> powers, string powerId)
+        {
+            var power = powers.SingleOrDefault(x => x.Id == powerId);
+
+            if (power == null)
+            {
+                power = new Power() { Id = powerId, Name = powerId, Amount = 1 };
+                powers.Add(power);
+            }
+            else
+            {
+                power.Amount++;
+            }
         }
 
         static void DealAttackDamageToMonster(CombatState cs, Monster monster, int baseDamage)
@@ -166,6 +181,11 @@ namespace SlayTheSpireAi
             if (cs.Player.HasPower("Weakened"))
             {
                 adjustedDamage = (int)(adjustedDamage * 0.75);
+            }
+
+            if (monster.HasPower("Vulnerable"))
+            {
+                adjustedDamage = (int)(adjustedDamage * 1.5);
             }
                 
             if (monster.Block > 0)

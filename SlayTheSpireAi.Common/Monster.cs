@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SlayTheSpireAi
 {
@@ -58,6 +60,10 @@ namespace SlayTheSpireAi
         public int MaxHp { get; set; }
 
         public int Block { get; set; }
-        public Power[] Powers { get; set; }
+        public List<Power> Powers { get; set; }
+        public bool HasPower(string powerId)
+        {
+            return Powers.Any(x => x.Id == powerId);
+        }
     }
 }

@@ -195,7 +195,7 @@ namespace SlayTheSpireAi
 
                 if (!gs.Children.Any())
                 {
-                    _logger.Log(gs.Score + ": " + ancestry + " + " + gs.Precondition);
+                    //_logger.Log(gs.Score + ": " + ancestry + " + " + gs.Precondition);
 
                     score = gs.Score;
                 }
