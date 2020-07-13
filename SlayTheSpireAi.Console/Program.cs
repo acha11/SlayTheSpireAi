@@ -17,6 +17,10 @@ namespace SlayTheSpireAi.Console
             var evaluation = ai.EvaluateActionsUnderGameState(new ActionGenerator(), gsm.GameState, 0);
 
             var chosenAction = ai.FindActionWithBestSubscore(evaluation, 0, "");
+
+            System.Console.WriteLine("Chosen action:");
+
+            System.Console.WriteLine(chosenAction.Precondition);
         }
     }
 }

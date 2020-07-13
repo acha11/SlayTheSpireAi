@@ -123,8 +123,6 @@ namespace SlayTheSpireAi
 
                 _logger.Log($"Turn {++turnNumber}");
 
-                // BlockAndStrikeStrategy();
-
                 PlannedStrategy();
             }
 
@@ -160,6 +158,30 @@ namespace SlayTheSpireAi
             _logger.Log("Playing " + JsonConvert.SerializeObject(action.Precondition));
 
             Send(action.Precondition.ConvertToCommand(_lastGameStateMessage.GameState));
+
+            if (_lastGameStateMessage.GameState.CombatState != null)
+            {
+                // Check monster state against expectations
+                var expectedCs = action.GameState.CombatState;
+                var actualCs = _lastGameStateMessage.GameState.CombatState;
+
+                for (int i = 0; i < action.GameState.CombatState.Monsters.Length; i++)
+                {
+                    var expected = expectedCs.Monsters[i];
+                    var actual = actualCs.Monsters[i];
+
+                    if (expected.CurrentHp != actual.CurrentHp)
+                    {
+                        _logger.Log($"Expected outcome discrepancy for monster {i}: Expected {expected.CurrentHp} HP, actual {actual.CurrentHp} HP");
+                    }
+                }
+
+                // Check player state against expectations
+                if (expectedCs.Player.Block != actualCs.Player.Block)
+                {
+                    _logger.Log($"Expected outcome discrepancy for player: Expected {expectedCs.Player.Block} block, actual {actualCs.Player.Block} block");
+                }
+            }
         }
 
         public ScoredGameState FindActionWithBestSubscore(List<ScoredGameState> sgs, int depth, string ancestry)
@@ -265,78 +287,7 @@ namespace SlayTheSpireAi
 
             score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
 
-            if (score == 1700)
-            {
-                Debugger.Break();
-            }
-
             return score;
-        }
-
-        private void BlockAndStrikeStrategy()
-        {
-            _logger.Log("Phase 1: block until it's no longer possible or no longer necessary");
-
-            // First, block until we are blocking more than the incoming damage, or we can't block any more, or the fight is over
-            while (_combatState.Player.Energy > 0 && CalculateIncomingDamage() > _combatState.Player.Block && _lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
-            {
-                _logger.Log("Looking for a block card");
-
-                var bestBlockCard = _combatState.Hand.FirstOrDefault(x => x.Name == "Defend" && x.Cost <= _combatState.Player.Energy);
-
-                if (bestBlockCard == null)
-                {
-                    _logger.Log("No block card found.");
-
-                    break;
-                }
-
-                _logger.Log($"Playing card {bestBlockCard.Uuid}");
-
-                Play(bestBlockCard);
-            }
-
-            _logger.Log("Phase 2: attack");
-
-            // Now, attack until we can't, or the fight ends
-            while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
-            {
-                _logger.Log("Looking for an attack card");
-
-                var bestAttackCard = _combatState.Hand.FirstOrDefault(x => x.Name == "Strike" && x.Cost <= _combatState.Player.Energy);
-
-                if (bestAttackCard == null)
-                {
-                    _logger.Log("No attack card found.");
-
-                    break;
-                }
-
-                _logger.Log($"Playing card {bestAttackCard.Uuid}");
-
-                // Choose a monster to attack
-                var target = _combatState.Monsters.FirstOrDefault(x => !x.IsGone);
-
-                _logger.Log($"Chose monster: " + target.Name);
-
-                Play(bestAttackCard, Array.IndexOf(_combatState.Monsters, target));
-            }
-
-            // If we're still in combat, end our turn
-            if (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT")
-            {
-                Send(new EndCommand());
-            }
-        }
-
-        void Play(Card card, int? targetIndex = null)
-        {
-            // Get the 1-based index of the card in the current hand
-            var cardIndex = 1 + Array.IndexOf(_combatState.Hand, card);
-
-            Send(new PlayCommand(cardIndex, targetIndex));
-
-            WaitForMonsterIntentsToBeValid();
         }
 
         void WaitForMonsterIntentsToBeValid()

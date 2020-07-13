@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Linq;
 
 namespace SlayTheSpireAi
 {
@@ -10,5 +12,10 @@ namespace SlayTheSpireAi
 
         [JsonProperty(PropertyName = "current_hp")]
         public int CurrentHp { get; set; }
+
+        public bool HasPower(string powerId)
+        {
+            return Powers.Any(x => x.Id == powerId);
+        }
     }
 }

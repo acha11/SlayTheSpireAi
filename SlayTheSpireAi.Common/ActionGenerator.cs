@@ -97,7 +97,7 @@ namespace SlayTheSpireAi
         {
             var gs = gameState.Clone();
 
-            switch (Card.Name)
+            switch (Card.Id)
             {
                 case "Defend_R":
                     ApplyDefendToGs(gs);
@@ -105,6 +105,10 @@ namespace SlayTheSpireAi
 
                 case "Strike_R":
                     ApplyStrikeToGs(gs);
+                    break;
+
+                case "Bash":
+                    ApplyBashToGs(gs);
                     break;
 
                 default:
@@ -138,22 +142,43 @@ namespace SlayTheSpireAi
         {
             var monster = gs.CombatState.Monsters[Target.Value];
 
-            DealDamage(monster, 6);
+            DealAttackDamageToMonster(gs.CombatState, monster, 6);
         }
 
-        static void DealDamage(Monster monster, int dmg)
+        void ApplyBashToGs(GameState gs)
         {
-            dmg -= monster.Block;
+            var monster = gs.CombatState.Monsters[Target.Value];
 
+            DealAttackDamageToMonster(gs.CombatState, monster, 8);
+
+            ApplyVulnerableToMonster(monster);
+        }
+
+        void ApplyVulnerableToMonster(Monster monster)
+        {
+            // Notimplemented
+        }
+
+        static void DealAttackDamageToMonster(CombatState cs, Monster monster, int baseDamage)
+        {
+            var adjustedDamage = baseDamage;
+
+            if (cs.Player.HasPower("Weakened"))
+            {
+                adjustedDamage = (int)(adjustedDamage * 0.75);
+            }
+                
             if (monster.Block > 0)
             {
-                monster.Block = Math.Max(0, monster.Block - dmg);
-                dmg -= Math.Min(monster.Block, dmg);
+                var amountBlocked = Math.Min(monster.Block, adjustedDamage);
+
+                monster.Block -= amountBlocked;
+                adjustedDamage -= amountBlocked;
             }
 
-            if (dmg > 0)
+            if (adjustedDamage > 0)
             {
-                monster.CurrentHp -= 6;
+                monster.CurrentHp -= adjustedDamage;
             }
 
             if (monster.CurrentHp < 0) monster.CurrentHp = 0;

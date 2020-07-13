@@ -15,47 +15,35 @@
           "Exhausts": false,
           "is_playable": true,
           "Cost": 1,
+          "Name": "Strike",
+          "Id": "Strike_R",
+          "Uuid": "a0af2326-0b7c-4e67-b0a4-7bb409dd890f",
+          "has_target": true
+        },
+        {
+          "Exhausts": false,
+          "is_playable": true,
+          "Cost": 1,
           "Name": "Defend",
-          "Uuid": "a18be711-ec98-4325-b9ca-97c0ace52447",
+          "Id": "Defend_R",
+          "Uuid": "02fdc15b-1e23-4a28-b788-87c92a68e1d1",
           "has_target": false
         },
         {
           "Exhausts": false,
           "is_playable": true,
           "Cost": 1,
-          "Name": "Strike",
-          "Uuid": "4fa96c69-9e68-49bb-b56c-cf60315c3705",
-          "has_target": true
-        },
-        {
-          "Exhausts": false,
-          "is_playable": true,
-          "Cost": 1,
-          "Name": "Strike",
-          "Uuid": "2271398b-c5fa-42e1-afee-043d4f00db5a",
-          "has_target": true
-        },
-        {
-          "Exhausts": false,
-          "is_playable": true,
-          "Cost": 2,
-          "Name": "Bash",
-          "Uuid": "37bcc002-9275-4d0a-9068-7a142d9c3009",
-          "has_target": true
-        },
-        {
-          "Exhausts": false,
-          "is_playable": true,
-          "Cost": 1,
-          "Name": "Strike",
-          "Uuid": "3285ebfc-673d-43b2-8da6-92f58047d6eb",
-          "has_target": true
+          "Name": "Defend",
+          "Id": "Defend_R",
+          "Uuid": "4a79c27a-3c0a-47be-83ea-59a993ed57a5",
+          "has_target": false
         }
       ],
       "Player": {
-        "Energy": 3,
-        "Block": 0,
-        "current_hp": 84
+        "Energy": 1,
+        "Block": 5,
+        "Powers": [],
+        "current_hp": 88
       },
       "Monsters": [
         {
@@ -63,12 +51,32 @@
           "is_gone": false,
           "move_hits": 1,
           "move_base_damage": 6,
-          "move_adjusted_damage": 18,
+          "move_adjusted_damage": 6,
           "Intent": 0,
-          "Name": "Cultist",
-          "current_hp": 16,
-          "max_hp": 52,
-          "Block": 0
+          "Name": "Louse",
+          "current_hp": 14,
+          "max_hp": 14,
+          "Block": 0,
+          "Powers": [
+            {
+              "Amount": 6,
+              "Name": "Curl Up",
+              "Id": "Curl Up"
+            }
+          ]
+        },
+        {
+          "IntendsToAttack": true,
+          "is_gone": false,
+          "move_hits": 1,
+          "move_base_damage": 5,
+          "move_adjusted_damage": 5,
+          "Intent": 0,
+          "Name": "Louse",
+          "current_hp": 4,
+          "max_hp": 10,
+          "Block": 5,
+          "Powers": []
         }
       ]
     },
@@ -76,4 +84,3 @@
     "screen_type": "NONE"
   }
 }
-

@@ -16,6 +16,7 @@ namespace SlayTheSpireAi
         Stun,
         Strong_Debuff,
         Unknown,
+        Escape,
 
         // "DEBUG" seems to be an interim state that the comms layer mistakenly treats as final & passes on to me
         // in some cases. When it appears, I manually request a state update and it disappears, replaced with the
@@ -56,9 +57,7 @@ namespace SlayTheSpireAi
         [JsonProperty(PropertyName = "max_hp")]
         public int MaxHp { get; set; }
 
-
-
         public int Block { get; set; }
-
+        public Power[] Powers { get; set; }
     }
 }
