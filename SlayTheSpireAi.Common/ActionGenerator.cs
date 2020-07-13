@@ -90,7 +90,7 @@ namespace SlayTheSpireAi
                 return $"{Card.Name}";
             }
 
-            return $"{Card.Name} at target {Target}";
+            return $"{Card.Name} {Target}";
         }
 
         public GameState ApplyTo(ILogger logger, GameState gameState)
@@ -127,6 +127,16 @@ namespace SlayTheSpireAi
         {
             gs.CombatState.Player.Block += 5;
 
+            foreach (var monster in gs.CombatState.Monsters)
+            {
+                int rage = monster.LevelOfPower("Anger");
+
+                if (rage > 0)
+                {
+                    IncreasePower(monster.Powers, "Strength", rage);
+                }
+            }
+
             Discard(gs);
         }
 
@@ -156,22 +166,20 @@ namespace SlayTheSpireAi
 
         void ApplyVulnerableToMonster(Monster monster)
         {
-            IncrementPower(monster.Powers, "Vulnerable");
+            IncreasePower(monster.Powers, "Vulnerable", 2);
         }
 
-        void IncrementPower(List<Power> powers, string powerId)
+        void IncreasePower(List<Power> powers, string powerId, int amount)
         {
             var power = powers.SingleOrDefault(x => x.Id == powerId);
 
             if (power == null)
             {
-                power = new Power() { Id = powerId, Name = powerId, Amount = 1 };
+                power = new Power() { Id = powerId, Name = powerId, Amount = 0 };
                 powers.Add(power);
             }
-            else
-            {
-                power.Amount++;
-            }
+
+            power.Amount += amount;
         }
 
         static void DealAttackDamageToMonster(CombatState cs, Monster monster, int baseDamage)
@@ -183,7 +191,7 @@ namespace SlayTheSpireAi
                 adjustedDamage = (int)(adjustedDamage * 0.75);
             }
 
-            if (monster.HasPower("Vulnerable"))
+            if (monster.LevelOfPower("Vulnerable") > 0)
             {
                 adjustedDamage = (int)(adjustedDamage * 1.5);
             }
@@ -199,6 +207,11 @@ namespace SlayTheSpireAi
             if (adjustedDamage > 0)
             {
                 monster.CurrentHp -= adjustedDamage;
+
+                if (monster.LevelOfPower("Curl Up") > 0)
+                {
+                    monster.Block += monster.LevelOfPower("Curl Up");
+                }
             }
 
             if (monster.CurrentHp < 0) monster.CurrentHp = 0;

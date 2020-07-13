@@ -61,9 +61,9 @@ namespace SlayTheSpireAi
 
         public int Block { get; set; }
         public List<Power> Powers { get; set; }
-        public bool HasPower(string powerId)
+        public int LevelOfPower(string powerId)
         {
-            return Powers.Any(x => x.Id == powerId);
+            return Powers.SingleOrDefault(x => x.Id == powerId)?.Amount ?? 0;
         }
     }
 }

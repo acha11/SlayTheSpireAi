@@ -18,7 +18,7 @@ namespace SlayTheSpireAi.Console
 
             var chosenAction = ai.FindActionWithBestSubscore(evaluation, 0, "");
 
-            System.Console.WriteLine("Chosen action:");
+            System.Console.WriteLine("Chosen action, with score " + chosenAction.BestScoreOfLeafNodes);
 
             System.Console.WriteLine(chosenAction.Precondition);
         }

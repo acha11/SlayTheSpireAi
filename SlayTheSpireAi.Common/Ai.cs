@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Mail;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -177,7 +178,7 @@ namespace SlayTheSpireAi
                 }
 
                 // Check player state against expectations
-                if (expectedCs.Player.Block != actualCs.Player.Block)
+                if (!(action.Precondition is EndTurnAction) && expectedCs.Player.Block != actualCs.Player.Block)
                 {
                     _logger.Log($"Expected outcome discrepancy for player: Expected {expectedCs.Player.Block} block, actual {actualCs.Player.Block} block");
                 }
@@ -195,13 +196,13 @@ namespace SlayTheSpireAi
 
                 if (!gs.Children.Any())
                 {
-                    //_logger.Log(gs.Score + ": " + ancestry + " + " + gs.Precondition);
+                    _logger.Log(gs.Score + ": " + ancestry + " " + gs.Precondition);
 
                     score = gs.Score;
                 }
                 else
                 {
-                    string newAncestry = ancestry.Length == 0 ? gs.Precondition.ToString() : ancestry + " + " + gs.Precondition;
+                    string newAncestry = ancestry.Length == 0 ? gs.Precondition.ToString() : ancestry + " " + gs.Precondition;
 
                     score = FindActionWithBestSubscore(gs.Children, depth + 1, newAncestry).BestScoreOfLeafNodes;
                 }
@@ -287,6 +288,29 @@ namespace SlayTheSpireAi
 
             score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
 
+            // penalise score based on monster strength times the number of turns we estimate it will be around for.
+            const float MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn = 10;
+
+            score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower("Strength") * x.CurrentHp / MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn);
+
+            // Value vulnerability on monsters
+            foreach (var m in result.CombatState.Monsters)
+            {
+                var vuln = m.Powers.SingleOrDefault(x => x.Id == "Vulnerable");
+
+                if (vuln != null)
+                {
+                    if (m.CurrentHp > 6 && vuln.Amount > 0) score += 3f;
+                    if (m.CurrentHp > 12 && vuln.Amount > 0) score += 3f;
+                    if (m.CurrentHp > 18 && vuln.Amount > 1) score += 3f;
+                }
+            }
+
+            if (score == 1653)
+            {
+                Debugger.Break();
+            }
+
             return score;
         }
 
@@ -299,7 +323,7 @@ namespace SlayTheSpireAi
             while (_combatState.Monsters.Any(x => x.Intent == MonsterIntents.Debug))
             {
                 _logger.Log("Monster has DEBUG intent - requesting updated state after a delay");
-                Send(new WaitCommand(60));
+                Send(new WaitCommand(10));
             }
         }
 

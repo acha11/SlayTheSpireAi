@@ -17,17 +17,8 @@
           "Cost": 1,
           "Name": "Strike",
           "Id": "Strike_R",
-          "Uuid": "0f318780-58a6-4aa8-bfa1-55a2e9d464b5",
+          "Uuid": "a69be48f-ae58-400a-a427-78ccb6a76832",
           "has_target": true
-        },
-        {
-          "Exhausts": false,
-          "is_playable": true,
-          "Cost": 1,
-          "Name": "Defend",
-          "Id": "Defend_R",
-          "Uuid": "5b508a21-ad45-4da5-9747-89519951e180",
-          "has_target": false
         },
         {
           "Exhausts": false,
@@ -35,17 +26,8 @@
           "Cost": 2,
           "Name": "Bash",
           "Id": "Bash",
-          "Uuid": "5965721c-22d0-4b8b-811e-1f38ab87c15f",
+          "Uuid": "0854b80a-62e3-49ff-a0fd-6fe6279efa24",
           "has_target": true
-        },
-        {
-          "Exhausts": false,
-          "is_playable": true,
-          "Cost": 1,
-          "Name": "Defend",
-          "Id": "Defend_R",
-          "Uuid": "979a347b-8560-4519-8df0-a4f30488e087",
-          "has_target": false
         },
         {
           "Exhausts": false,
@@ -53,29 +35,57 @@
           "Cost": 1,
           "Name": "Strike",
           "Id": "Strike_R",
-          "Uuid": "4c09cdc7-3ee2-4388-b76e-badcfe4ff3f5",
+          "Uuid": "9694ee79-24ef-4b9c-809d-ba15dd1c43f6",
+          "has_target": true
+        },
+        {
+          "Exhausts": false,
+          "is_playable": true,
+          "Cost": 1,
+          "Name": "Strike",
+          "Id": "Strike_R",
+          "Uuid": "9c59280d-1dd6-4dfe-a93a-f141a93e9b2e",
           "has_target": true
         }
       ],
       "Player": {
-        "Energy": 3,
+        "Energy": 2,
         "Block": 0,
         "Powers": [],
-        "current_hp": 72
+        "current_hp": 88
       },
       "Monsters": [
         {
-          "IntendsToAttack": false,
+          "IntendsToAttack": true,
           "is_gone": false,
           "move_hits": 1,
-          "move_base_damage": -1,
-          "move_adjusted_damage": -1,
-          "Intent": 9,
-          "Name": "Lagavulin",
-          "current_hp": 90,
-          "max_hp": 111,
-          "Block": 0,
+          "move_base_damage": 6,
+          "move_adjusted_damage": 6,
+          "Intent": 0,
+          "Name": "Louse",
+          "current_hp": 7,
+          "max_hp": 13,
+          "Block": 5,
           "Powers": []
+        },
+        {
+          "IntendsToAttack": true,
+          "is_gone": false,
+          "move_hits": 1,
+          "move_base_damage": 7,
+          "move_adjusted_damage": 7,
+          "Intent": 0,
+          "Name": "Louse",
+          "current_hp": 11,
+          "max_hp": 11,
+          "Block": 0,
+          "Powers": [
+            {
+              "Amount": 7,
+              "Name": "Curl Up",
+              "Id": "Curl Up"
+            }
+          ]
         }
       ]
     },
@@ -83,3 +93,4 @@
     "screen_type": "NONE"
   }
 }
+
