@@ -8,6 +8,7 @@ namespace SlayTheSpireAi
         Attack,
         Buff,
         Debuff,
+        Defend,
         Defend_Buff,
         Attack_Defend,
         Attack_Debuff,

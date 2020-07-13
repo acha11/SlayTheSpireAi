@@ -12,6 +12,7 @@ namespace SlayTheSpireAi
 
         public int Cost { get; set; }
         public string Name { get; set; }
+        public string Id { get; set; }
 
         public Guid Uuid { get; set; }
 

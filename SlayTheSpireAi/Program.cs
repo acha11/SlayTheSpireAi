@@ -9,7 +9,7 @@ namespace SlayTheSpireAi
     {
         static void Main(string[] args)
         {
-            ILogger l = new Logger();
+            ILogger l = new FileLogger();
 
             Ai ai = new Ai(l);
 

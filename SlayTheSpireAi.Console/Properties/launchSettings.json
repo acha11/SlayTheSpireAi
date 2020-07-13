@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SlayTheSpireAi.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "../../../test-1.json"
+    }
+  }
+}

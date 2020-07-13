@@ -11,12 +11,20 @@ namespace SlayTheSpireAi
         void Log(string s);
     }
 
-    public class Logger : ILogger
+    public class ConsoleLogger : ILogger
+    {
+        public void Log(string s)
+        {
+            Console.WriteLine(s);
+        }
+    }
+
+    public class FileLogger : ILogger
     {
         string _exeDirectory;
         string _logPath;
 
-        public Logger()
+        public FileLogger()
         {
             _exeDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
@@ -25,7 +33,7 @@ namespace SlayTheSpireAi
 
         public void Log(string s)
         {
-            //File.AppendAllLines(_logPath, new string[] { s });
+            File.AppendAllLines(_logPath, new string[] { s });
         }
     }
 }

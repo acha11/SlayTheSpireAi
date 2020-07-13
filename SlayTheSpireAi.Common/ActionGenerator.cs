@@ -85,7 +85,12 @@ namespace SlayTheSpireAi
 
         public override string ToString()
         {
-            return $"Play card {Card.Name} against target {Target}";
+            if (Target == null)
+            {
+                return $"{Card.Name}";
+            }
+
+            return $"{Card.Name} at target {Target}";
         }
 
         public GameState ApplyTo(ILogger logger, GameState gameState)
@@ -94,11 +99,11 @@ namespace SlayTheSpireAi
 
             switch (Card.Name)
             {
-                case "Defend":
+                case "Defend_R":
                     ApplyDefendToGs(gs);
                     break;
 
-                case "Strike":
+                case "Strike_R":
                     ApplyStrikeToGs(gs);
                     break;
 
@@ -133,9 +138,18 @@ namespace SlayTheSpireAi
         {
             var monster = gs.CombatState.Monsters[Target.Value];
 
-            var dmg = 6;
+            DealDamage(monster, 6);
+        }
 
+        static void DealDamage(Monster monster, int dmg)
+        {
             dmg -= monster.Block;
+
+            if (monster.Block > 0)
+            {
+                monster.Block = Math.Max(0, monster.Block - dmg);
+                dmg -= Math.Min(monster.Block, dmg);
+            }
 
             if (dmg > 0)
             {
@@ -143,6 +157,8 @@ namespace SlayTheSpireAi
             }
 
             if (monster.CurrentHp < 0) monster.CurrentHp = 0;
+
+            if (monster.CurrentHp == 0) monster.IsGone = true;
         }
 
         public ICommand ConvertToCommand(GameState gameState)
@@ -172,25 +188,27 @@ namespace SlayTheSpireAi
             // (One day this will change for velvet choker, etc.)
             foreach (var card in gameState.CombatState.Hand)
             {
-                if (card.Cost <= gameState.CombatState.Player.Energy)
+                if (card.Cost > gameState.CombatState.Player.Energy) continue;
+
+                // Can be false if entangled. Might also reflect whether the player has sufficient energy.
+                if (!card.IsPlayable) continue;
+
+                // Is it a targeted card?
+                if (card.HasTarget)
                 {
-                    // Is it a targeted card?
-                    if (card.HasTarget)
+                    // Allow it to be played targetting any of the monsters that
+                    // are still here
+                    for (int i = 0; i < gameState.CombatState.Monsters.Length; i++)
                     {
-                        // Allow it to be played targetting any of the monsters that
-                        // are still here
-                        for (int i = 0; i < gameState.CombatState.Monsters.Length; i++)
+                        if (!gameState.CombatState.Monsters[i].IsGone)
                         {
-                            if (!gameState.CombatState.Monsters[i].IsGone)
-                            {
-                                actions.Add(new PlayCardAction(card) { Target = i });
-                            }
+                            actions.Add(new PlayCardAction(card) { Target = i });
                         }
                     }
-                    else
-                    {
-                        actions.Add(new PlayCardAction(card));
-                    }
+                }
+                else
+                {
+                    actions.Add(new PlayCardAction(card));
                 }
             }
 

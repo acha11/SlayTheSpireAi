@@ -32,6 +32,8 @@ namespace SlayTheSpireAi
             // Indicate that we're ready
             SendRaw("ready");
 
+            Debugger.Launch();
+
             Send(new StartCommand("ironclad", 1, null));
 
             if (_lastGameStateMessage?.GameState?.ChoiceList != null)
@@ -153,14 +155,14 @@ namespace SlayTheSpireAi
 
             var sgs = EvaluateActionsUnderGameState(ag, _lastGameStateMessage.GameState, 0);
 
-            var action = FindActionWithBestSubscore(sgs, 1);
+            var action = FindActionWithBestSubscore(sgs, 1, "");
 
             _logger.Log("Playing " + JsonConvert.SerializeObject(action.Precondition));
 
             Send(action.Precondition.ConvertToCommand(_lastGameStateMessage.GameState));
         }
 
-        private ScoredGameState FindActionWithBestSubscore(List<ScoredGameState> sgs, int depth)
+        public ScoredGameState FindActionWithBestSubscore(List<ScoredGameState> sgs, int depth, string ancestry)
         {
             float bestScoreSoFar = float.MinValue;
             ScoredGameState bestSgsSoFar = null;
@@ -171,35 +173,30 @@ namespace SlayTheSpireAi
 
                 if (!gs.Children.Any())
                 {
-                    _logger.Log("".PadLeft(depth * 3) + gs.Precondition.ToString() + ": " + gs.Score);
+                    _logger.Log(gs.Score + ": " + ancestry + " + " + gs.Precondition);
+
                     score = gs.Score;
                 }
                 else
                 {
-                    _logger.Log("".PadLeft(depth * 3) + gs.Precondition.ToString() + ": has children");
+                    string newAncestry = ancestry.Length == 0 ? gs.Precondition.ToString() : ancestry + " + " + gs.Precondition;
 
-                    score = FindActionWithBestSubscore(gs.Children, depth + 1).BestScoreOfLeafNodes;
+                    score = FindActionWithBestSubscore(gs.Children, depth + 1, newAncestry).BestScoreOfLeafNodes;
                 }
 
                 gs.BestScoreOfLeafNodes = score;
 
-                _logger.Log("".PadLeft(depth * 3, '!') + "scored " + score);
-
                 if (score > bestScoreSoFar)
                 {
-                    _logger.Log("".PadLeft(depth * 3, '@') + "that's an improvement. " + score);
-
                     bestScoreSoFar = score;
                     bestSgsSoFar = gs;
                 }
             }
             
-            _logger.Log("".PadLeft(depth * 3, '#') + " group done. bestscore " + bestScoreSoFar);
-
             return bestSgsSoFar;
         }
 
-        class ScoredGameState
+        public class ScoredGameState
         {
             public IAction Precondition { get; set; }
             public GameState GameState { get; set; }
@@ -209,7 +206,7 @@ namespace SlayTheSpireAi
             public float BestScoreOfLeafNodes { get; internal set; }
         }
 
-        List<ScoredGameState> EvaluateActionsUnderGameState(ActionGenerator ag, GameState gameState, int depth)
+        public List<ScoredGameState> EvaluateActionsUnderGameState(ActionGenerator ag, GameState gameState, int depth)
         {
             var scoredGameStates = new List<ScoredGameState>();
 
@@ -250,13 +247,15 @@ namespace SlayTheSpireAi
         {
             float score = 0;
 
+            // Prefer solutions that lose less energy. This is a way to reduce playing of
+            // redundant cards (e.g. defends on a turn where the monster won't get to
+            // attack anyway because it's going to die). Also, being lazy is stylish.
+            score += result.CombatState.Player.Energy;
+
             // Score 20 for each defeated monster
             score += 20 * result.CombatState.Monsters.Where(x => x.CurrentHp == 0).Count();
 
-            // S
-
             // Score -bignumber for dead player
-
             if (result.CombatState.Player.CurrentHp == 0)
             {
                 score -= 1000000;
@@ -265,6 +264,11 @@ namespace SlayTheSpireAi
             score += result.CombatState.Player.CurrentHp * 20;
 
             score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
+
+            if (score == 1700)
+            {
+                Debugger.Break();
+            }
 
             return score;
         }
