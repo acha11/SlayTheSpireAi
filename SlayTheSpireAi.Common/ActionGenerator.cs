@@ -133,7 +133,7 @@ namespace SlayTheSpireAi
 
                 if (rage > 0)
                 {
-                    IncreasePower(monster.Powers, "Strength", rage);
+                    AdjustPower(monster.Powers, "Strength", rage);
                 }
             }
 
@@ -166,10 +166,10 @@ namespace SlayTheSpireAi
 
         void ApplyVulnerableToMonster(Monster monster)
         {
-            IncreasePower(monster.Powers, "Vulnerable", 2);
+            AdjustPower(monster.Powers, "Vulnerable", 2);
         }
 
-        void IncreasePower(List<Power> powers, string powerId, int amount)
+        void AdjustPower(List<Power> powers, string powerId, int delta)
         {
             var power = powers.SingleOrDefault(x => x.Id == powerId);
 
@@ -179,10 +179,15 @@ namespace SlayTheSpireAi
                 powers.Add(power);
             }
 
-            power.Amount += amount;
+            power.Amount += delta;
+
+            if (power.Amount <= 0)
+            {
+                powers.Remove(power);
+            }
         }
 
-        static void DealAttackDamageToMonster(CombatState cs, Monster monster, int baseDamage)
+        void DealAttackDamageToMonster(CombatState cs, Monster monster, int baseDamage)
         {
             var adjustedDamage = baseDamage;
 
@@ -211,6 +216,8 @@ namespace SlayTheSpireAi
                 if (monster.LevelOfPower("Curl Up") > 0)
                 {
                     monster.Block += monster.LevelOfPower("Curl Up");
+
+                    AdjustPower(monster.Powers, "Curl Up", -1);
                 }
             }
 
