@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.StateRepresentations
 {
-    public class Power
+    public class PowerState
     {
         public int Amount { get; set; }
         public string Name { get; set; }

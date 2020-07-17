@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SlayTheSpireAi.Common.StateRepresentations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ namespace SlayTheSpireAi.Common.GameLogic
 
         public GameState GameState { get { return _gameState; } }
 
-        public void Discard(Card card)
+        public void Discard(CardState card)
         {
             // Remove card from hand. Should also put it in the discard pile.
             _gameState.CombatState.Hand =
@@ -27,7 +28,7 @@ namespace SlayTheSpireAi.Common.GameLogic
                 .ToArray();
         }
 
-        public void Exhaust(Card card)
+        public void Exhaust(CardState card)
         {
             // Remove card from hand. Should also put it in the exhaust list.
             _gameState.CombatState.Hand =
@@ -43,18 +44,18 @@ namespace SlayTheSpireAi.Common.GameLogic
 
         public Cards CardImplementations { get { return _cardImplementations; } }
 
-        public void ApplyVulnerableToMonster(Monster monster)
+        public void ApplyVulnerableToMonster(MonsterState monster)
         {
             AdjustPower(monster.Powers, "Vulnerable", 2);
         }
 
-        public void AdjustPower(List<Power> powers, string powerId, int delta)
+        public void AdjustPower(List<PowerState> powers, string powerId, int delta)
         {
             var power = powers.SingleOrDefault(x => x.Id == powerId);
 
             if (power == null)
             {
-                power = new Power() { Id = powerId, Name = powerId, Amount = 0 };
+                power = new PowerState() { Id = powerId, Name = powerId, Amount = 0 };
                 powers.Add(power);
             }
 
@@ -66,7 +67,7 @@ namespace SlayTheSpireAi.Common.GameLogic
             }
         }
 
-        public void DealAttackDamageToMonster(Monster monster, int baseDamage)
+        public void DealAttackDamageToMonster(MonsterState monster, int baseDamage)
         {
             var cs = GameState.CombatState;
 

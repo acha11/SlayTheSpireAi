@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.StateRepresentations
 {
     public class GameState
     {

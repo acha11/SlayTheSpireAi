@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.StateRepresentations
 {
     public class GameStateMessage
     {
@@ -12,5 +12,7 @@ namespace SlayTheSpireAi
 
         [JsonProperty(PropertyName = "in_game")]
         public bool InGame { get; set; }
+
+        public DeckState Deck { get; set; }
     }
 }

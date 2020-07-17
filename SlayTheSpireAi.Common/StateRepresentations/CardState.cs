@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.StateRepresentations
 {
-    public class Card
+    public class CardState
     {
         public bool Exhausts { get; set; }
 

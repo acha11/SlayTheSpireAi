@@ -2,13 +2,13 @@
 using System;
 using System.Linq;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.StateRepresentations
 {
     public class PlayerState
     {
         public int Energy { get; set; }
         public int Block { get; set; }
-        public Power[] Powers { get; set; }
+        public PowerState[] Powers { get; set; }
 
         [JsonProperty(PropertyName = "current_hp")]
         public int CurrentHp { get; set; }

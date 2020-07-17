@@ -3,7 +3,7 @@ using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.StateRepresentations
 {
     public enum MonsterIntents
     {
@@ -26,7 +26,7 @@ namespace SlayTheSpireAi
         Debug
     }
 
-    public class Monster
+    public class MonsterState
     {
         public bool IntendsToAttack
         {
@@ -60,7 +60,7 @@ namespace SlayTheSpireAi
         public int MaxHp { get; set; }
 
         public int Block { get; set; }
-        public List<Power> Powers { get; set; }
+        public List<PowerState> Powers { get; set; }
         public int LevelOfPower(string powerId)
         {
             return Powers.SingleOrDefault(x => x.Id == powerId)?.Amount ?? 0;

@@ -1,4 +1,6 @@
 ﻿using SlayTheSpireAi.Common.CardImplementations;
+using SlayTheSpireAi.Common.StateRepresentations;
+using SlayTheSpireAi.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,12 +10,12 @@ namespace SlayTheSpireAi.Common.GameLogic.ActionImplementations
 {
     public class PlayCardAction : IAction
     {
-        public PlayCardAction(Card card)
+        public PlayCardAction(CardState card)
         {
             Card = card;
         }
 
-        public Card Card { get; }
+        public CardState Card { get; }
         public int? Target { get; set; }
 
         public override string ToString()

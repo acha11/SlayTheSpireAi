@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SlayTheSpireAi.Common.GameLogic;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
+using SlayTheSpireAi.Common.StateRepresentations;
 using System.Linq;
 
 namespace SlayTheSpireAi.UnitTests
@@ -20,7 +21,7 @@ namespace SlayTheSpireAi.UnitTests
                             Energy = 1
                         },
                         Hand =
-                            new Card[]
+                            new CardState[]
                             {
                             }
                     }
@@ -51,9 +52,9 @@ namespace SlayTheSpireAi.UnitTests
             var gameState = BuildBaseGameState();
 
             gameState.CombatState.Hand =
-                new Card[]
+                new CardState[]
                 {
-                    new Card()
+                    new CardState()
                     {
                         Cost = 1,
                         IsPlayable = true,
@@ -81,9 +82,9 @@ namespace SlayTheSpireAi.UnitTests
             var gameState = BuildBaseGameState();
 
             gameState.CombatState.Hand =
-                new Card[]
+                new CardState[]
                 {
-                    new Card()
+                    new CardState()
                     {
                         Cost = 2,
                         IsPlayable = true,

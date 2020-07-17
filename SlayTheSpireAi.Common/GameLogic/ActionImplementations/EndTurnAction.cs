@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SlayTheSpireAi.Common.StateRepresentations;
+using SlayTheSpireAi.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.Text;
 

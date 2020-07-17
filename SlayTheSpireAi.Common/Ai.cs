@@ -2,6 +2,8 @@
 using Newtonsoft.Json.Linq;
 using SlayTheSpireAi.Common.GameLogic;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
+using SlayTheSpireAi.Common.StateRepresentations;
+using SlayTheSpireAi.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -76,8 +78,7 @@ namespace SlayTheSpireAi
                             break;
 
                         default:
-                            // Shops come this way.
-                            Send(new ProceedCommand());
+                            HandleShop();
 
                             break;
                     }
@@ -88,14 +89,26 @@ namespace SlayTheSpireAi
             }
         }
 
+        private void HandleShop()
+        {
+            _logger.Log("HandleShop()");
+
+            Send(new ProceedCommand());
+        }
+
         void HandleEventScreen()
         {
-            _logger.Log("Event");
+            _logger.Log("HandleEventScreen");
 
             switch (_lastGameStateMessage.GameState.ScreenState.EventId)
             {
                 case "The Cleric":
                     HandleEventTheCleric();
+
+                    break;
+
+                case "Golden Wing":
+                    HandleEventGoldenWing();
 
                     break;
 
@@ -128,6 +141,46 @@ namespace SlayTheSpireAi
             }
 
             Send(new ProceedCommand());
+        }
+
+        void HandleEventGoldenWing()
+        {
+            // Options are like
+            //    "Pray": "[Pray] Remove a card from your deck. Lose 7 HP."
+            //    "Locked when I checked it": "[Locked] Requires: Card with 10 or more damage."
+            //    "Leave": "[Leave]"
+            var card = FindCardThatWouldMostIncreaseUtilityIfRemovedFromDeck();
+
+            var healScore = CalculateUtilityOfHeal(22);
+
+            var removeCardScore = CalculateUtilityOfRemoveCard();
+
+            if (healScore > removeCardScore)
+            {
+                Send(new ChooseCommand(null, "Heal"));
+            }
+            else
+            {
+                Debugger.Launch();
+
+                Send(new ChooseCommand(null, "Purify"));
+            }
+
+            Send(new ProceedCommand());
+        }
+
+        class UtilityOfRemovingCardFromDeck
+        {
+            public float Utility { get; set; }
+            public string CardUuid { get; set; }
+        }
+
+        UtilityOfRemovingCardFromDeck FindCardThatWouldMostIncreaseUtilityIfRemovedFromDeck()
+        {
+            // TODO: Ungarbage
+            //foreach (var card in _lastGameStateMessage.GameState.
+
+            return null;
         }
 
         float CalculateUtilityOfRemoveCard()

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Infrastructure
 {
     public interface ILogger
     {

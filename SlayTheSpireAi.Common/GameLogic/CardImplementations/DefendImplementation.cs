@@ -1,4 +1,5 @@
 ﻿using SlayTheSpireAi.Common.GameLogic;
+using SlayTheSpireAi.Common.StateRepresentations;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,7 +8,7 @@ namespace SlayTheSpireAi.Common.CardImplementations
 {
     public class DefendImplementation : ICardImplementation
     {
-        public void ApplyCard(Card card, GameStateWrapper gameStateWrapper, int? target)
+        public void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
         {
             gameStateWrapper.GameState.CombatState.Player.Block += 5;
 

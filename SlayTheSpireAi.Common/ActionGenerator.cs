@@ -1,5 +1,6 @@
 ﻿using SlayTheSpireAi.Common.GameLogic;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
+using SlayTheSpireAi.Common.StateRepresentations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
