@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SlayTheSpireAi.Common;
 using SlayTheSpireAi.Common.GameLogic;
+using SlayTheSpireAi.Common.GameLogic.ActionGenerator;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
 using SlayTheSpireAi.Common.StateRepresentations;
 using SlayTheSpireAi.Infrastructure;
@@ -26,6 +28,7 @@ namespace SlayTheSpireAi
         CombatState _combatState;
         Cards _cardImplementations = new Cards();
         ActionGenerator _actionGenerator;
+        IGameConnection _gameConnection;
 
         public Ai(ILogger logger)
         {
@@ -39,8 +42,7 @@ namespace SlayTheSpireAi
             _logger.Log("Starting run");
             _logger.Log("------------");
 
-            // Indicate that we're ready
-            SendRaw("ready");
+            _gameConnection = new StdioConnectionToRealGame(_logger);
 
             Debugger.Launch();
 
@@ -216,14 +218,6 @@ namespace SlayTheSpireAi
                     Send(new ChooseCommand(0));
                 }
             }
-        }
-
-        int CalculateIncomingDamage()
-        {
-            return
-                _combatState.Monsters
-                .Where(x => !x.IsGone && x.IntendsToAttack)
-                .Sum(x => x.MoveAdjustedDamage * x.MoveHits);
         }
 
         void RunCombat()
@@ -473,26 +467,9 @@ namespace SlayTheSpireAi
 
         void Send(ICommand command)
         {
-            SendRaw(command.GetString());
-        }
-
-        void SendRaw(string command)
-        {
-            _logger.Log($"Sending '{command}'");
-
-            Console.WriteLine(command);
-
-            // Await updated state
-            var updatedState = Console.ReadLine();
-
-            _logger.Log("Received state: " + updatedState);
-
-            GameStateMessage gsm = JsonConvert.DeserializeObject<GameStateMessage>(updatedState);
-
-            _logger.Log("Parsed to: " + JsonConvert.SerializeObject(gsm, Formatting.Indented));
+            var gsm = _gameConnection.Send(command);
 
             _lastGameStateMessage = gsm;
-
             _combatState = _lastGameStateMessage.GameState?.CombatState;
         }
     }

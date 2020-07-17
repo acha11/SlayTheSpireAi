@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
-namespace SlayTheSpireAi
+namespace SlayTheSpireAi.Common.GameLogic.ActionGenerator
 {
     public class ActionGenerator
     {

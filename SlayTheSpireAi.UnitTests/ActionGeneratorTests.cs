@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SlayTheSpireAi.Common.GameLogic;
+using SlayTheSpireAi.Common.GameLogic.ActionGenerator;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
 using SlayTheSpireAi.Common.StateRepresentations;
 using System.Linq;

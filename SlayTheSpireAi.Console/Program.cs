@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SlayTheSpireAi.Common.GameLogic;
+using SlayTheSpireAi.Common.GameLogic.ActionGenerator;
 using SlayTheSpireAi.Common.StateRepresentations;
 using SlayTheSpireAi.Infrastructure;
 using System;
