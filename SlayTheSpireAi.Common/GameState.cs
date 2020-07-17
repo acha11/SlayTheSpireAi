@@ -15,6 +15,8 @@ namespace SlayTheSpireAi
         [JsonProperty(PropertyName = "screen_type")]
         public string ScreenType { get; set; }
 
+        public long Seed { get; set; }
+
         [JsonProperty(PropertyName = "screen_state")]
         public ScreenState ScreenState { get; set; }
 

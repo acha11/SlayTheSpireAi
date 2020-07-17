@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SlayTheSpireAi.Common.GameLogic;
 using System;
 using System.IO;
 
@@ -14,7 +15,11 @@ namespace SlayTheSpireAi.Console
 
             var ai = new Ai(new ConsoleLogger());
 
-            var evaluation = ai.EvaluateActionsUnderGameState(new ActionGenerator(), gsm.GameState, 0);
+            var cards = new Cards();
+
+            var gsw = new GameStateWrapper(gsm.GameState, cards);
+
+            var evaluation = ai.EvaluateActionsUnderGameState(new ActionGenerator(cards), gsw, 0);
 
             var chosenAction = ai.FindActionWithBestSubscore(evaluation, 0, "");
 

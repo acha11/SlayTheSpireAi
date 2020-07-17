@@ -9,5 +9,8 @@ namespace SlayTheSpireAi
 
         [JsonProperty(PropertyName = "game_state")]
         public GameState GameState { get; set; }
+
+        [JsonProperty(PropertyName = "in_game")]
+        public bool InGame { get; set; }
     }
 }

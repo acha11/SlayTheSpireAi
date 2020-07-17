@@ -1,4 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SlayTheSpireAi.Common.GameLogic;
+using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
 using System.Linq;
 
 namespace SlayTheSpireAi.UnitTests
@@ -28,7 +30,9 @@ namespace SlayTheSpireAi.UnitTests
         [TestMethod]
         public void WhenGameStateEmptyCanOnlyEndTurn()
         {
-            ActionGenerator ag = new ActionGenerator();
+            var cards = new Cards();
+
+            ActionGenerator ag = new ActionGenerator(cards);
 
             var actions = ag.GenerateActions(BuildBaseGameState());
 
@@ -40,7 +44,9 @@ namespace SlayTheSpireAi.UnitTests
         [TestMethod]
         public void WhenHoldingOneCardCanPlayCard()
         {
-            ActionGenerator ag = new ActionGenerator();
+            var cards = new Cards();
+
+            ActionGenerator ag = new ActionGenerator(cards);
 
             var gameState = BuildBaseGameState();
 
@@ -68,7 +74,9 @@ namespace SlayTheSpireAi.UnitTests
         [TestMethod]
         public void CannotPlayCardWithoutSufficientEnergy()
         {
-            ActionGenerator ag = new ActionGenerator();
+            var cards = new Cards();
+
+            ActionGenerator ag = new ActionGenerator(cards);
 
             var gameState = BuildBaseGameState();
 

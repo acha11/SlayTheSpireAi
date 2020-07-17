@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SlayTheSpireAi.Common.GameLogic;
+using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,8 +9,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Mail;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace SlayTheSpireAi
@@ -18,10 +22,13 @@ namespace SlayTheSpireAi
         ILogger _logger;
         GameStateMessage _lastGameStateMessage;
         CombatState _combatState;
+        Cards _cardImplementations = new Cards();
+        ActionGenerator _actionGenerator;
 
         public Ai(ILogger logger)
         {
             _logger = logger;
+            _actionGenerator = new ActionGenerator(_cardImplementations);
         }
 
         public void Run()
@@ -35,7 +42,7 @@ namespace SlayTheSpireAi
 
             Debugger.Launch();
 
-            Send(new StartCommand("ironclad", 1, null));
+            Send(new StartCommand("ironclad", 1, "AAA"));
 
             if (_lastGameStateMessage?.GameState?.ChoiceList != null)
             {
@@ -44,12 +51,13 @@ namespace SlayTheSpireAi
                 // Options when you're a new character who didn't reach a boss: 
                 //  "enemies in your next three combats have 1 hp",
                 //  "max hp +7"
-                ExpectAndChooseChoice(NeowEventChoices.MaxHpPlus7);
+                //ExpectAndChooseChoice(NeowEventChoices.MaxHpPlus7);
+                ExpectAndChooseChoice("obtain 100 gold");
 
                 // After choosing, we're offered just the one option: leave
                 ExpectAndChooseChoice("leave");
 
-                while (true)
+                while (_lastGameStateMessage.InGame)
                 {
                     // Now, we're on the map screen & offered rooms. Just choose the first so we can get in a fight.
                     // This will fail if the first offered room happens to be a question mark.
@@ -74,6 +82,9 @@ namespace SlayTheSpireAi
                             break;
                     }
                 }
+
+                // Run is over
+                _logger.Log("Run over.");
             }
         }
 
@@ -81,6 +92,56 @@ namespace SlayTheSpireAi
         {
             _logger.Log("Event");
 
+            switch (_lastGameStateMessage.GameState.ScreenState.EventId)
+            {
+                case "The Cleric":
+                    HandleEventTheCleric();
+
+                    break;
+
+                default:
+                    HandleUnimplementedEvent();
+
+                    break;
+            }
+        }
+
+        void HandleEventTheCleric()
+        {
+            // Options are like
+            //    "Heal": "[Heal] 35 Gold: Heal 22 HP."
+            //    "Purify": "[Purify] 50 Gold: Remove a card from your deck."
+            //    "Leave": "[Leave]"
+            var healScore = CalculateUtilityOfHeal(22);
+
+            var removeCardScore = CalculateUtilityOfRemoveCard();
+
+            if (healScore > removeCardScore)
+            {
+                Send(new ChooseCommand(null, "Heal"));
+            }
+            else
+            {
+                Debugger.Launch();
+
+                Send(new ChooseCommand(null, "Purify"));
+            }
+
+            Send(new ProceedCommand());
+        }
+
+        float CalculateUtilityOfRemoveCard()
+        {
+            return 30;
+        }
+
+        float CalculateUtilityOfHeal(int hp)
+        {
+            return hp;
+        }
+
+        void HandleUnimplementedEvent()
+        {
             if (_lastGameStateMessage.AvailableCommands.Contains("proceed"))
             {
                 _logger.Log("Sending proceed");
@@ -130,10 +191,13 @@ namespace SlayTheSpireAi
             // Handle reward (or death?)
             if (_lastGameStateMessage.GameState.RoomPhase == "COMPLETE")
             {
-                // Win. Take gold, ignore card.
+                // Win. Take gold.
                 Send(new ChooseCommand(choiceName: "gold"));
 
-                Send(new ProceedCommand());
+                // Check the card options
+                Send(new ChooseCommand(choiceName: "card"));
+
+                ChooseAmongstOfferedCards();
             }
             else
             {
@@ -148,17 +212,26 @@ namespace SlayTheSpireAi
             }
         }
 
+        void ChooseAmongstOfferedCards()
+        {
+            Thread.Sleep(2500);
+
+            Send(new ChooseCommand(choiceIndex: 0));
+
+            Send(new ProceedCommand());
+        }
+
         void PlannedStrategy()
         {
-            ActionGenerator ag = new ActionGenerator();
+            var gsw = new GameStateWrapper(_lastGameStateMessage.GameState, _cardImplementations);
 
-            var sgs = EvaluateActionsUnderGameState(ag, _lastGameStateMessage.GameState, 0);
+            var sgs = EvaluateActionsUnderGameState(_actionGenerator, gsw, 0);
 
             var action = FindActionWithBestSubscore(sgs, 1, "");
 
             _logger.Log("Playing " + JsonConvert.SerializeObject(action.Precondition));
 
-            Send(action.Precondition.ConvertToCommand(_lastGameStateMessage.GameState));
+            Send(action.Precondition.ConvertToCommand(gsw));
 
             if (_lastGameStateMessage.GameState.CombatState != null)
             {
@@ -229,22 +302,24 @@ namespace SlayTheSpireAi
             public float BestScoreOfLeafNodes { get; internal set; }
         }
 
-        public List<ScoredGameState> EvaluateActionsUnderGameState(ActionGenerator ag, GameState gameState, int depth)
+        public List<ScoredGameState> EvaluateActionsUnderGameState(ActionGenerator ag, GameStateWrapper gameStateWrapper, int depth)
         {
             var scoredGameStates = new List<ScoredGameState>();
 
-            var actions = ag.GenerateActions(gameState);
+            var actions = ag.GenerateActions(gameStateWrapper.GameState);
 
             foreach (var action in actions)
             {
-                var result = action.ApplyTo(_logger, gameState);
+                var gswClone = gameStateWrapper.Clone();
+
+                action.ApplyTo(_logger, gswClone);
 
                 var sgs =
                     new ScoredGameState()
                     {
                         Precondition = action,
-                        GameState = result,
-                        Score = ScoreGameState(result),
+                        GameState = gswClone.GameState,
+                        Score = ScoreGameState(gswClone.GameState),
                         Children = new List<ScoredGameState>()
                     };
 
@@ -252,7 +327,7 @@ namespace SlayTheSpireAi
 
                 if (!(action is EndTurnAction))
                 {
-                    var children = EvaluateActionsUnderGameState(ag, result, depth + 1);
+                    var children = EvaluateActionsUnderGameState(ag, gswClone, depth + 1);
 
                     foreach (var child in children)
                     {
@@ -284,14 +359,18 @@ namespace SlayTheSpireAi
                 score -= 1000000;
             }
 
-            score += result.CombatState.Player.CurrentHp * 20;
+            const float ValueOfOnePlayerHp = 20;
+
+            score += result.CombatState.Player.CurrentHp * ValueOfOnePlayerHp;
 
             score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
+
+            score -= result.CombatState.Hand.Count(x => x.Id == "Slimed") * 3;
 
             // penalise score based on monster strength times the number of turns we estimate it will be around for.
             const float MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn = 10;
 
-            score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower("Strength") * x.CurrentHp / MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn);
+            score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower("Strength") * x.CurrentHp * ValueOfOnePlayerHp / MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn);
 
             // Value vulnerability on monsters
             foreach (var m in result.CombatState.Monsters)
@@ -304,11 +383,6 @@ namespace SlayTheSpireAi
                     if (m.CurrentHp > 12 && vuln.Amount > 0) score += 3f;
                     if (m.CurrentHp > 18 && vuln.Amount > 1) score += 3f;
                 }
-            }
-
-            if (score == 1653)
-            {
-                Debugger.Break();
             }
 
             return score;
