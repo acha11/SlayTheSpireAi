@@ -13,13 +13,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Mail;
-using System.Reflection;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace SlayTheSpireAi
 {
@@ -345,9 +338,19 @@ namespace SlayTheSpireAi
         {
             var gsw = new GameStateWrapper(_lastGameStateMessage.GameState, _cardImplementations);
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             var sgs = EvaluateActionsUnderGameState(_actionGenerator, gsw, 0);
 
+            _logger.Log("Evaluate actions took " + sw.ElapsedMilliseconds + "ms");
+
+            sw.Reset();
+            sw.Start();
+
             var action = FindActionWithBestSubscore(sgs, 1, "");
+
+            _logger.Log("Find action with best subscore took " + sw.ElapsedMilliseconds + "ms");
 
             _logger.Log("Playing " + JsonConvert.SerializeObject(action.Precondition));
 
@@ -443,6 +446,11 @@ namespace SlayTheSpireAi
                         Children = new List<ScoredGameState>()
                     };
 
+                if (float.IsNaN(sgs.Score))
+                {
+                    Debugger.Break();
+                }
+
                 _logger.Log("!".PadLeft(3 * depth) + "Action " + sgs.Precondition.ToString() + ": " + sgs.Score);
 
                 if (!(action is EndTurnAction))
@@ -492,9 +500,16 @@ namespace SlayTheSpireAi
             //
             // A Dazed in the draw pile is worse the fewer cards we have in the draw pile.
             // A Dazed in the discard pile is worse the fewer cards we have in the draw pile plus the discard pile.
-            score -= result.CombatState.DrawPile.Count(x => x.Id == "Dazed") * (15.0f / result.CombatState.DrawPile.Count);
-            score -= result.CombatState.DiscardPile.Count(x => x.Id == "Dazed") * (10.0f / (result.CombatState.DrawPile.Count + result.CombatState.DiscardPile.Count));
+            var drawPile = result.CombatState.DrawPile;
+            var discardPile = result.CombatState.DiscardPile;
 
+            var dazedsInDrawPile = drawPile.Count(x => x.Id == "Dazed");
+            var dazedsInDiscardPile = discardPile.Count(x => x.Id == "Dazed");
+
+            const int RoughlyHowManyCardsAreDrawnPerTurn = 5;
+
+            score -= dazedsInDrawPile * (15.0f / Math.Max(RoughlyHowManyCardsAreDrawnPerTurn, drawPile.Count));
+            score -= dazedsInDiscardPile * (10.0f / (Math.Max(RoughlyHowManyCardsAreDrawnPerTurn, drawPile.Count + discardPile.Count)));
 
             // penalise score based on monster strength times the number of turns we estimate it will be around for.
             const float MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn = 10;
@@ -512,6 +527,11 @@ namespace SlayTheSpireAi
                     if (m.CurrentHp > 12 && vuln.Amount > 0) score += 3f;
                     if (m.CurrentHp > 18 && vuln.Amount > 1) score += 3f;
                 }
+            }
+
+            if (float.IsNaN(score))
+            {
+                throw new Exception("Score is NaN");
             }
 
             return score;
