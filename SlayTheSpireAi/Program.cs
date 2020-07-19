@@ -28,6 +28,8 @@ namespace SlayTheSpireAi
             }
 
             l.Log("Shutting down");
+
+            l.Shutdown();
         }
     }
 }

@@ -11,6 +11,7 @@ namespace SlayTheSpireAi.Infrastructure
     public interface ILogger
     {
         void Log(string s);
+        void Shutdown();
     }
 
     public class ConsoleLogger : ILogger
@@ -18,6 +19,10 @@ namespace SlayTheSpireAi.Infrastructure
         public void Log(string s)
         {
             Console.WriteLine(s);
+        }
+
+        public void Shutdown()
+        {
         }
     }
 
@@ -28,6 +33,9 @@ namespace SlayTheSpireAi.Infrastructure
 
         Thread _loggingThread;
         ConcurrentQueue<string> _loggingQueue = new ConcurrentQueue<string>();
+
+        bool _shutdownCommandReceived = false;
+        bool _shutdown = false;
 
         public FileLogger()
         {
@@ -52,7 +60,7 @@ namespace SlayTheSpireAi.Infrastructure
 
         public void LoggingThread()
         {
-            while (true)
+            while (!_shutdownCommandReceived)
             {
                 List<string> entries = new List<string>();
 
@@ -71,11 +79,23 @@ namespace SlayTheSpireAi.Infrastructure
 
                 Thread.Sleep(250);
             }
+
+            _shutdown = true;
         }
 
         public void Log(string s)
         {
             _loggingQueue.Enqueue(s);
+        }
+
+        public void Shutdown()
+        {
+            _shutdownCommandReceived = true;
+
+            while (!_shutdown)
+            {
+                Thread.Sleep(100);
+            }
         }
     }
 }
