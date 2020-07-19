@@ -12,6 +12,7 @@ namespace SlayTheSpireAi.Common.StateRepresentations
         Debuff,
         Defend,
         Defend_Buff,
+        Attack_Buff,
         Attack_Defend,
         Attack_Debuff,
         Sleep,

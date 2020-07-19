@@ -166,6 +166,13 @@ namespace SlayTheSpireAi.Common.GameLogic
                 adjustedDamage -= amountBlocked;
             }
 
+            var sharpHide = monster.LevelOfPower("Sharp Hide");
+
+            if (sharpHide > 0)
+            {
+                DealDamageToPlayer(sharpHide);
+            }
+
             if (adjustedDamage > 0)
             {
                 monster.CurrentHp -= adjustedDamage;
@@ -181,6 +188,11 @@ namespace SlayTheSpireAi.Common.GameLogic
             if (monster.CurrentHp < 0) monster.CurrentHp = 0;
 
             if (monster.CurrentHp == 0) monster.IsGone = true;
+        }
+
+        void DealDamageToPlayer(int amount)
+        {
+            GameState.CombatState.Player.CurrentHp = Math.Max(0, GameState.CombatState.Player.CurrentHp);
         }
     }
 }

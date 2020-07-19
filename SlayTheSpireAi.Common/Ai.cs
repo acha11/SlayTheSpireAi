@@ -123,6 +123,11 @@ namespace SlayTheSpireAi
 
                     break;
 
+                case "Golden Idol":
+                    HandleEventGoldenIdol();
+
+                    break;
+
                 default:
                     HandleUnimplementedEvent();
 
@@ -170,6 +175,12 @@ namespace SlayTheSpireAi
 
             Send(new ProceedCommand());
 
+            Send(new ChooseCommand(null, "Leave"));
+        }
+
+        void HandleEventGoldenIdol()
+        {
+            Send(new ChooseCommand(null, "Leave"));
             Send(new ChooseCommand(null, "Leave"));
         }
 
