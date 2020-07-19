@@ -296,9 +296,16 @@ namespace SlayTheSpireAi
                 }
             }
 
-            Send(new ChooseCommand(choiceIndex: indexOfBestOfferSoFar));
+            if (indexOfBestOfferSoFar != -1)
+            {
+                Send(new ChooseCommand(choiceIndex: indexOfBestOfferSoFar));
 
-            Send(new ProceedCommand());
+                Send(new ProceedCommand());
+            }
+            else
+            {
+                Send(new ReturnCommand());
+            }
         }
 
         private void UpdateCardStatusMarkerFiles()

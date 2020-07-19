@@ -62,6 +62,8 @@ namespace SlayTheSpireAi.Infrastructure
         {
             while (!_shutdownCommandReceived)
             {
+                Thread.Sleep(250);
+
                 List<string> entries = new List<string>();
 
                 var count = _loggingQueue.Count;
@@ -76,8 +78,6 @@ namespace SlayTheSpireAi.Infrastructure
 
                     File.AppendAllLines(_logPath, entries);
                 }
-
-                Thread.Sleep(250);
             }
 
             _shutdown = true;
