@@ -1,17 +1,37 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using SlayTheSpireAi.Common.CardImplementations;
+using SlayTheSpireAi.Common.GameLogic.CardImplementations;
 
 namespace SlayTheSpireAi.Common.GameLogic
 {
     public class Cards
     {
         Dictionary<string, ICardImplementation> _cardImplementations =
-            new Dictionary<string, ICardImplementation>()
+            new Dictionary<string, ICardImplementation>(StringComparer.InvariantCultureIgnoreCase)
             {
+                // Ironclad
                 { "Defend_R", new DefendImplementation() },
                 { "Strike_R", new StrikeImplementation() },
                 { "Bash", new BashImplementation() },
+                { "Cleave", new CleaveImplementation() },
+                { "Flex", new FlexImplementation() },
+                { "Perfected Strike", new PerfectedStrikeImplementation() },
+                { "Reckless Charge", new RecklessChargeImplementation() },
+
+                // Silent
+
+                // Defect
+
+                // Watcher
+
+                // Colorless
+
+                // Curse
+
+                // Status
+
                 { "Slimed", new SlimedImplementation() },
             };
 

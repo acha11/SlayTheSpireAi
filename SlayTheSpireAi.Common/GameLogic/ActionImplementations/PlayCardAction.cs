@@ -1,4 +1,5 @@
 ﻿using SlayTheSpireAi.Common.CardImplementations;
+using SlayTheSpireAi.Common.Commands;
 using SlayTheSpireAi.Common.StateRepresentations;
 using SlayTheSpireAi.Infrastructure;
 using System;
@@ -59,7 +60,7 @@ namespace SlayTheSpireAi.Common.GameLogic.ActionImplementations
 
             var card = gs.CombatState.Hand.SingleOrDefault(x => x.Uuid == Card.Uuid);
 
-            return new PlayCommand(Array.IndexOf(gs.CombatState.Hand, card) + 1, Target);
+            return new PlayCommand(gs.CombatState.Hand.IndexOf(card) + 1, Target);
         }
     }
 }

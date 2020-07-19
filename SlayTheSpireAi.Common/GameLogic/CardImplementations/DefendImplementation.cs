@@ -6,9 +6,9 @@ using System.Text;
 
 namespace SlayTheSpireAi.Common.CardImplementations
 {
-    public class DefendImplementation : ICardImplementation
+    public class DefendImplementation : CardImplementationBase
     {
-        public void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
+        public override void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
         {
             gameStateWrapper.GameState.CombatState.Player.Block += 5;
 

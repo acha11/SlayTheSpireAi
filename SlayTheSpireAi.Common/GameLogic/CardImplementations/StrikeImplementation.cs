@@ -6,9 +6,9 @@ using System.Text;
 
 namespace SlayTheSpireAi.Common.CardImplementations
 {
-    public class StrikeImplementation : ICardImplementation
+    public class StrikeImplementation : CardImplementationBase
     {
-        public void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
+        public override void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
         {
             var monster = gameStateWrapper.GameState.CombatState.Monsters[target.Value];
 

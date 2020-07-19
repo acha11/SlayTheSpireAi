@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace SlayTheSpireAi.Common.StateRepresentations
 {
@@ -12,7 +13,5 @@ namespace SlayTheSpireAi.Common.StateRepresentations
 
         [JsonProperty(PropertyName = "in_game")]
         public bool InGame { get; set; }
-
-        public DeckState Deck { get; set; }
     }
 }

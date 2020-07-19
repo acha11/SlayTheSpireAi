@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SlayTheSpireAi.Common;
+using SlayTheSpireAi.Common.Commands;
 using SlayTheSpireAi.Common.GameLogic;
 using SlayTheSpireAi.Common.GameLogic.ActionGenerator;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Mail;
 using System.Reflection;
@@ -29,6 +31,8 @@ namespace SlayTheSpireAi
         Cards _cardImplementations = new Cards();
         ActionGenerator _actionGenerator;
         IGameConnection _gameConnection;
+
+        bool _enableCardStatusMarkerFileMaintenance = true;
 
         public Ai(ILogger logger)
         {
@@ -79,6 +83,10 @@ namespace SlayTheSpireAi
 
                             break;
 
+                        case "REST":
+                            HandleRestScreen();
+                            break;
+
                         default:
                             HandleShop();
 
@@ -89,6 +97,14 @@ namespace SlayTheSpireAi
                 // Run is over
                 _logger.Log("Run over.");
             }
+        }
+
+        private void HandleRestScreen()
+        {
+            // TODO: Choose upgrade sometimes
+            Send(new ChooseCommand(null, "rest"));
+
+            Send(new ProceedCommand());
         }
 
         private void HandleShop()
@@ -153,36 +169,39 @@ namespace SlayTheSpireAi
             //    "Leave": "[Leave]"
             var card = FindCardThatWouldMostIncreaseUtilityIfRemovedFromDeck();
 
-            var healScore = CalculateUtilityOfHeal(22);
+            Send(new ChooseCommand(null, "Pray"));
 
-            var removeCardScore = CalculateUtilityOfRemoveCard();
+            Send(new ChooseCommand(null, "Continue"));
 
-            if (healScore > removeCardScore)
-            {
-                Send(new ChooseCommand(null, "Heal"));
-            }
-            else
-            {
-                Debugger.Launch();
-
-                Send(new ChooseCommand(null, "Purify"));
-            }
+            Send(new ChooseCommand(_lastGameStateMessage.GameState.Deck.FindIndex(x => x.Uuid == card.Card.Uuid), null));
 
             Send(new ProceedCommand());
+
+            Send(new ChooseCommand(null, "Leave"));
         }
 
         class UtilityOfRemovingCardFromDeck
         {
             public float Utility { get; set; }
-            public string CardUuid { get; set; }
+            public CardState Card { get; set; }
         }
 
         UtilityOfRemovingCardFromDeck FindCardThatWouldMostIncreaseUtilityIfRemovedFromDeck()
         {
-            // TODO: Ungarbage
-            //foreach (var card in _lastGameStateMessage.GameState.
+            var u = new List<UtilityOfRemovingCardFromDeck>();
 
-            return null;
+            foreach (var card in _lastGameStateMessage.GameState.Deck)
+            {
+                var ci = _cardImplementations.GetCardImplementationOrNull(card.Id);
+
+                // Don't consider unimplemented cards for removal
+                if (ci != null)
+                {
+                    u.Add(new UtilityOfRemovingCardFromDeck() { Card = card, Utility = ci.BaseUtility });
+                }
+            }
+
+            return u.OrderBy(x => x.Utility).First();
         }
 
         float CalculateUtilityOfRemoveCard()
@@ -261,11 +280,65 @@ namespace SlayTheSpireAi
 
         void ChooseAmongstOfferedCards()
         {
-            Thread.Sleep(2500);
+            if (_enableCardStatusMarkerFileMaintenance)
+            {
+                UpdateCardStatusMarkerFiles();
+            }
 
-            Send(new ChooseCommand(choiceIndex: 0));
+            int indexOfBestOfferSoFar = -1;
+            ICardImplementation bestOfferSoFar;
+            float bestScoreSoFar = float.MinValue;
+
+            for (int i = 0; i < _lastGameStateMessage.GameState.ChoiceList.Length; i++)
+            {
+                var choice = _lastGameStateMessage.GameState.ChoiceList[i];
+
+                var card = _cardImplementations.GetCardImplementationOrNull(choice);
+
+                if (card.BaseUtility > bestScoreSoFar)
+                {
+                    indexOfBestOfferSoFar = i;
+                    bestOfferSoFar = card;
+                    bestScoreSoFar = card.BaseUtility;
+                }
+            }
+
+            Send(new ChooseCommand(choiceIndex: indexOfBestOfferSoFar));
 
             Send(new ProceedCommand());
+        }
+
+        private void UpdateCardStatusMarkerFiles()
+        {
+            var exeDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+
+            string CardsSeenFolder = Path.Combine(exeDirectory, "CardsSeen");
+
+            string SeenAndImplementedPath = Path.Combine(CardsSeenFolder, "Implemented");
+            string SeenAndUnimplementedPath = Path.Combine(CardsSeenFolder, "Unimplemented");
+
+            Directory.CreateDirectory(SeenAndImplementedPath);
+            Directory.CreateDirectory(SeenAndUnimplementedPath);
+
+            // Log the offered cards
+            foreach (var choice in _lastGameStateMessage.GameState.ChoiceList)
+            {
+                var isImplemented = _cardImplementations.GetCardImplementationOrNull(choice) != null;
+
+                string cardImplementedMarkerFile = Path.Combine(SeenAndImplementedPath, choice + ".txt");
+                string cardUnimplementedMarkerFile = Path.Combine(SeenAndUnimplementedPath, choice + ".txt");
+
+                if (isImplemented)
+                {
+                    if (File.Exists(cardUnimplementedMarkerFile)) File.Delete(cardUnimplementedMarkerFile);
+                    if (!File.Exists(cardImplementedMarkerFile)) File.WriteAllText(cardImplementedMarkerFile, DateTime.Now.ToString());
+                }
+                else
+                {
+                    if (File.Exists(cardImplementedMarkerFile)) File.Delete(cardImplementedMarkerFile);
+                    if (!File.Exists(cardUnimplementedMarkerFile)) File.WriteAllText(cardUnimplementedMarkerFile, DateTime.Now.ToString());
+                }
+            }
         }
 
         void PlannedStrategy()
@@ -413,6 +486,15 @@ namespace SlayTheSpireAi
             score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
 
             score -= result.CombatState.Hand.Count(x => x.Id == "Slimed") * 3;
+
+            // A Dazed in the discard pile is less bad than one in the draw pile, because it'll take longer to
+            // come around to our hand again.
+            //
+            // A Dazed in the draw pile is worse the fewer cards we have in the draw pile.
+            // A Dazed in the discard pile is worse the fewer cards we have in the draw pile plus the discard pile.
+            score -= result.CombatState.DrawPile.Count(x => x.Id == "Dazed") * (15.0f / result.CombatState.DrawPile.Count);
+            score -= result.CombatState.DiscardPile.Count(x => x.Id == "Dazed") * (10.0f / (result.CombatState.DrawPile.Count + result.CombatState.DiscardPile.Count));
+
 
             // penalise score based on monster strength times the number of turns we estimate it will be around for.
             const float MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn = 10;

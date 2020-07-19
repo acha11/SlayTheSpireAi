@@ -1,4 +1,5 @@
-﻿using SlayTheSpireAi.Infrastructure;
+﻿using SlayTheSpireAi.Common.Commands;
+using SlayTheSpireAi.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Text;

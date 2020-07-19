@@ -8,45 +8,110 @@ namespace SlayTheSpireAi.Common.GameLogic
 {
     public class GameStateWrapper
     {
-        GameState _gameState;
-        Cards _cardImplementations;
-
         public GameStateWrapper(GameState gameState, Cards cardImplementations)
         {
-            _gameState = gameState;
-            _cardImplementations = cardImplementations;
+            GameState = gameState;
+            CardImplementations = cardImplementations;
         }
 
-        public GameState GameState { get { return _gameState; } }
+        public GameState GameState { get; }
+
+        public Cards CardImplementations { get; }
+
+        public PlayerState PlayerState { get { return GameState?.CombatState?.Player; } }
+
+        public void ShuffleCardIntoDrawPile(CardState cardState)
+        {
+            // I think this should be inserting at random location, but I'm not 
+            // implementing draw pile order-sensitive lookahead (because that
+            // only matters when you have frozen orb/frozen eye/whatever it's
+            // called), and the bang for buck is not there, so I'll just put it
+            // at the start of the draw pile.
+            GameState.CombatState.DrawPile.Insert(0, cardState);
+        }
 
         public void Discard(CardState card)
         {
             // Remove card from hand. Should also put it in the discard pile.
-            _gameState.CombatState.Hand =
-                _gameState.CombatState.Hand
+            GameState.CombatState.Hand =
+                GameState.CombatState.Hand
                 .Where(x => x.Uuid != card.Uuid)
-                .ToArray();
+                .ToList();
+        }
+
+        public void EndTurn()
+        {
+            var strengthDown = PlayerState.AmountOfPower("Strength Down");
+
+            if (strengthDown != 0)
+            {
+                AdjustPlayerPower("Strength", -strengthDown);
+
+                AdjustPlayerPower("Strength Down", -strengthDown);
+            }
+
+            // Loop through each monster and do their attacks, I guess...?
+            foreach (var monster in GameState.CombatState.Monsters)
+            {
+                if (monster.IsGone) continue;
+
+                switch (monster.Intent)
+                {
+                    case MonsterIntents.Attack:
+                    case MonsterIntents.Attack_Debuff:
+                    case MonsterIntents.Attack_Defend:
+                        for (int i = 0; i < monster.MoveHits; i++)
+                        {
+                            var block = GameState.CombatState.Player.Block;
+                            var attack = monster.MoveAdjustedDamage;
+
+                            var dmgBlocked = Math.Min(block, attack);
+
+                            attack -= dmgBlocked;
+
+                            GameState.CombatState.Player.Block -= dmgBlocked;
+
+                            var newHP = GameState.CombatState.Player.CurrentHp;
+
+                            newHP -= attack;
+
+                            newHP = Math.Max(newHP, 0);
+
+                            GameState.CombatState.Player.CurrentHp = newHP;
+
+                            if (newHP == 0)
+                            {
+                                break;
+                            }
+                        }
+
+                        break;
+                }
+            }
         }
 
         public void Exhaust(CardState card)
         {
             // Remove card from hand. Should also put it in the exhaust list.
-            _gameState.CombatState.Hand =
-                _gameState.CombatState.Hand
+            GameState.CombatState.Hand =
+                GameState.CombatState.Hand
                 .Where(x => x.Uuid != card.Uuid)
-                .ToArray();
+                .ToList();
         }
 
         public GameStateWrapper Clone()
         {
-            return new GameStateWrapper(_gameState.Clone(), _cardImplementations);            
+            return new GameStateWrapper(GameState.Clone(), CardImplementations);            
         }
-
-        public Cards CardImplementations { get { return _cardImplementations; } }
 
         public void ApplyVulnerableToMonster(MonsterState monster)
         {
             AdjustPower(monster.Powers, "Vulnerable", 2);
+        }
+
+        public void AdjustPlayerPower(string powerId, int delta)
+        {
+            AdjustPower(GameState.CombatState.Player.Powers, powerId, delta);
         }
 
         public void AdjustPower(List<PowerState> powers, string powerId, int delta)
@@ -67,11 +132,21 @@ namespace SlayTheSpireAi.Common.GameLogic
             }
         }
 
+        public void DealAttackDamageToAllMonsters(int baseDamage)
+        {
+            foreach (var monster in GameState.CombatState.Monsters.Where(x => !x.IsGone))
+            {
+                DealAttackDamageToMonster(monster, baseDamage);
+            }
+        }
+
         public void DealAttackDamageToMonster(MonsterState monster, int baseDamage)
         {
             var cs = GameState.CombatState;
 
             var adjustedDamage = baseDamage;
+
+            adjustedDamage += cs.Player.AmountOfPower("Strength");
 
             if (cs.Player.HasPower("Weakened"))
             {

@@ -3,6 +3,7 @@ using SlayTheSpireAi.Common.GameLogic;
 using SlayTheSpireAi.Common.GameLogic.ActionGenerator;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
 using SlayTheSpireAi.Common.StateRepresentations;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SlayTheSpireAi.UnitTests
@@ -21,10 +22,7 @@ namespace SlayTheSpireAi.UnitTests
                         {
                             Energy = 1
                         },
-                        Hand =
-                            new CardState[]
-                            {
-                            }
+                        Hand = new List<CardState>()
                     }
                 };
         }
@@ -53,7 +51,7 @@ namespace SlayTheSpireAi.UnitTests
             var gameState = BuildBaseGameState();
 
             gameState.CombatState.Hand =
-                new CardState[]
+                new List<CardState>
                 {
                     new CardState()
                     {
@@ -83,7 +81,7 @@ namespace SlayTheSpireAi.UnitTests
             var gameState = BuildBaseGameState();
 
             gameState.CombatState.Hand =
-                new CardState[]
+                new List<CardState>
                 {
                     new CardState()
                     {

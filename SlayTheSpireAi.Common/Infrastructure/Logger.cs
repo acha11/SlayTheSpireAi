@@ -29,6 +29,14 @@ namespace SlayTheSpireAi.Infrastructure
             _exeDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
             _logPath = Path.Combine(_exeDirectory, "ai.log");
+
+            if (File.Exists(_logPath))
+            {
+                string nameForOldFile = _logPath + ".previous.log";
+
+                File.Delete(nameForOldFile);
+                File.Move(_logPath, nameForOldFile);
+            }
         }
 
         public void Log(string s)

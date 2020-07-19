@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace SlayTheSpireAi.Common.StateRepresentations
 {
@@ -19,6 +20,8 @@ namespace SlayTheSpireAi.Common.StateRepresentations
 
         [JsonProperty(PropertyName = "screen_state")]
         public ScreenState ScreenState { get; set; }
+
+        public List<CardState> Deck { get; set; }
 
         public GameState Clone()
         {

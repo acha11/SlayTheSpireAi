@@ -10,6 +10,8 @@ namespace SlayTheSpireAi
     {
         static void Main(string[] args)
         {
+            Debugger.Launch();
+
             ILogger l = new FileLogger();
 
             Ai ai = new Ai(l);
