@@ -19,6 +19,7 @@ namespace SlayTheSpireAi.Common.GameLogic
                 { "Flex", new FlexImplementation() },
                 { "Perfected Strike", new PerfectedStrikeImplementation() },
                 { "Reckless Charge", new RecklessChargeImplementation() },
+                { "Thunderclap", new ThunderclapImplementation() },
 
                 // Silent
 
