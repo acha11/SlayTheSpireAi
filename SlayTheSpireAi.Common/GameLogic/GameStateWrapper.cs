@@ -30,6 +30,11 @@ namespace SlayTheSpireAi.Common.GameLogic
             GameState.CombatState.DrawPile.Insert(0, cardState);
         }
 
+        public int GetPlayerPower(string powerId)
+        {
+            return PlayerState.AmountOfPower(powerId);
+        }
+
         public void Discard(CardState card)
         {
             // Remove card from hand. Should also put it in the discard pile.
@@ -41,13 +46,13 @@ namespace SlayTheSpireAi.Common.GameLogic
 
         public void EndTurn()
         {
-            var strengthDown = PlayerState.AmountOfPower("Strength Down");
+            var strengthDown = PlayerState.AmountOfPower(Powers.StrengthDown);
 
             if (strengthDown != 0)
             {
-                AdjustPlayerPower("Strength", -strengthDown);
+                AdjustPlayerPower(Powers.Strength, -strengthDown);
 
-                AdjustPlayerPower("Strength Down", -strengthDown);
+                AdjustPlayerPower(Powers.StrengthDown, -strengthDown);
             }
 
             // Loop through each monster and do their attacks, I guess...?
@@ -104,9 +109,9 @@ namespace SlayTheSpireAi.Common.GameLogic
             return new GameStateWrapper(GameState.Clone(), CardImplementations);            
         }
 
-        public void ApplyVulnerableToMonster(MonsterState monster)
+        public void ApplyPowerToMonster(MonsterState monster, string powerId, int delta)
         {
-            AdjustPower(monster.Powers, "Vulnerable", 2);
+            AdjustPower(monster.Powers, powerId, delta);
         }
 
         public void AdjustPlayerPower(string powerId, int delta)

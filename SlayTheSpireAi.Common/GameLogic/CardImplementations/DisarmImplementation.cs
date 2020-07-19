@@ -6,17 +6,15 @@ using System.Text;
 
 namespace SlayTheSpireAi.Common.CardImplementations
 {
-    public class BashImplementation : CardImplementationBase
+    public class DisarmImplementation : CardImplementationBase
     {
-        public override float BaseUtility => 1.5f;
+        public override float BaseUtility => 1.8f;
 
         public override void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
         {
             var monster = gameStateWrapper.GameState.CombatState.Monsters[target.Value];
 
-            gameStateWrapper.DealAttackDamageToMonster(monster, 8);
-
-            gameStateWrapper.ApplyPowerToMonster(monster, Powers.Vulnerable, 1);
+            gameStateWrapper.ApplyPowerToMonster(monster, Powers.Strength, -3);
         }
     }
 }

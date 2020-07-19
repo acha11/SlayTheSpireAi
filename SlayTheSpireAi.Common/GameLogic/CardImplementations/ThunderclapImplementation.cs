@@ -14,7 +14,7 @@ namespace SlayTheSpireAi.Common.CardImplementations
 
             foreach (var monster in gameStateWrapper.GameState.CombatState.Monsters.Where(x => !x.IsGone))
             { 
-                gameStateWrapper.ApplyVulnerableToMonster(monster);
+                gameStateWrapper.ApplyPowerToMonster(monster, Powers.Vulnerable, 1);
             }
         }
     }

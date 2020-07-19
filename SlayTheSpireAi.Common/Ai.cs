@@ -268,6 +268,8 @@ namespace SlayTheSpireAi
                 Send(new ChooseCommand(choiceName: "card"));
 
                 ChooseAmongstOfferedCards();
+
+                Send(new ProceedCommand());
             }
             else
             {
@@ -310,8 +312,6 @@ namespace SlayTheSpireAi
             if (indexOfBestOfferSoFar != -1)
             {
                 Send(new ChooseCommand(choiceIndex: indexOfBestOfferSoFar));
-
-                Send(new ProceedCommand());
             }
             else
             {
@@ -513,6 +513,8 @@ namespace SlayTheSpireAi
 
             score -= result.CombatState.Hand.Count(x => x.Id == "Slimed") * 3;
 
+            score += result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower(Powers.Weak) * 5);
+
             // A Dazed in the discard pile is less bad than one in the draw pile, because it'll take longer to
             // come around to our hand again.
             //
@@ -532,12 +534,12 @@ namespace SlayTheSpireAi
             // penalise score based on monster strength times the number of turns we estimate it will be around for.
             const float MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn = 10;
 
-            score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower("Strength") * x.CurrentHp * ValueOfOnePlayerHp / MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn);
+            score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower(Powers.Strength) * x.CurrentHp * ValueOfOnePlayerHp / MagicNumber_NumberOfHpWeExpectToBurnDownPerTurn);
 
             // Value vulnerability on monsters
             foreach (var m in result.CombatState.Monsters)
             {
-                var vuln = m.Powers.SingleOrDefault(x => x.Id == "Vulnerable");
+                var vuln = m.Powers.SingleOrDefault(x => x.Id == Powers.Vulnerable);
 
                 if (vuln != null)
                 {
