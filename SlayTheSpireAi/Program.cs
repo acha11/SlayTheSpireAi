@@ -14,6 +14,8 @@ namespace SlayTheSpireAi
 
             ILogger l = new FileLogger();
 
+            l.Log("Starting.");
+
             Ai ai = new Ai(l);
 
             try

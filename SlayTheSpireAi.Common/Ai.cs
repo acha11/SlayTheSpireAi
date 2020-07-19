@@ -288,7 +288,7 @@ namespace SlayTheSpireAi
 
                 var card = _cardImplementations.GetCardImplementationOrNull(choice);
 
-                if (card.BaseUtility > bestScoreSoFar)
+                if (card != null && card.BaseUtility > bestScoreSoFar)
                 {
                     indexOfBestOfferSoFar = i;
                     bestOfferSoFar = card;
