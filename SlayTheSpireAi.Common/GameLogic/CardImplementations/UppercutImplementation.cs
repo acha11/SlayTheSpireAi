@@ -16,7 +16,7 @@ namespace SlayTheSpireAi.Common.CardImplementations
 
             gameStateWrapper.DealAttackDamageToMonster(monster, 13);
 
-            gameStateWrapper.ApplyPowerToMonster(monster, Powers.Weak, 1);
+            gameStateWrapper.ApplyPowerToMonster(monster, Powers.Weakened, 1);
             gameStateWrapper.ApplyPowerToMonster(monster, Powers.Vulnerable, 1);
         }
     }

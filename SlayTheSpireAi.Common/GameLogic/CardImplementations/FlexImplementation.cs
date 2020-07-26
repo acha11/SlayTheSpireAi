@@ -11,8 +11,8 @@ namespace SlayTheSpireAi.Common.GameLogic.CardImplementations
 
         public override void ApplyCard(CardState card, GameStateWrapper gameStateWrapper, int? target)
         {
-            gameStateWrapper.AdjustPlayerPower("Strength", 2);
-            gameStateWrapper.AdjustPlayerPower("Strength Down", 2);
+            gameStateWrapper.AdjustPlayerPower(Powers.Strength, 2);
+            gameStateWrapper.AdjustPlayerPower(Powers.StrengthDown, 2);
         }
     }
 }

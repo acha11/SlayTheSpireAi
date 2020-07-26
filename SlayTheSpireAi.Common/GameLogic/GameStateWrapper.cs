@@ -2,16 +2,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace SlayTheSpireAi.Common.GameLogic
 {
     public class GameStateWrapper
     {
+        MonsterState[] _liveMonsters;
+        Random _random = new Random();
+
         public GameStateWrapper(GameState gameState, Cards cardImplementations)
         {
             GameState = gameState;
             CardImplementations = cardImplementations;
+
+            _liveMonsters = gameState.CombatState.Monsters.Where(x => !x.IsGone).ToArray();
         }
 
         public GameState GameState { get; }
@@ -19,6 +25,8 @@ namespace SlayTheSpireAi.Common.GameLogic
         public Cards CardImplementations { get; }
 
         public PlayerState PlayerState { get { return GameState?.CombatState?.Player; } }
+
+        public MonsterState[] LiveMonsters { get { return _liveMonsters; } }
 
         public void ShuffleCardIntoDrawPile(CardState cardState)
         {
@@ -109,6 +117,27 @@ namespace SlayTheSpireAi.Common.GameLogic
             return new GameStateWrapper(GameState.Clone(), CardImplementations);            
         }
 
+        public void GivePlayerBlock(int delta)
+        {
+            GameState.CombatState.Player.Block += delta;
+
+            var juggernautLevel = PlayerState.AmountOfPower(Powers.Juggernaut);
+
+            if (GameState.CombatState.Player.HasPower(Powers.Juggernaut))
+            {
+                GameState.Deterministic = false;
+
+                MonsterState monster = ChooseRandomMonster();
+
+                DealAttackDamageToMonster(monster, juggernautLevel);
+            }
+        }
+
+        MonsterState ChooseRandomMonster()
+        {
+            return _liveMonsters[_random.Next(_liveMonsters.Length)];
+        }
+
         public void ApplyPowerToMonster(MonsterState monster, string powerId, int delta)
         {
             AdjustPower(monster.Powers, powerId, delta);
@@ -151,14 +180,14 @@ namespace SlayTheSpireAi.Common.GameLogic
 
             var adjustedDamage = baseDamage;
 
-            adjustedDamage += cs.Player.AmountOfPower("Strength");
+            adjustedDamage += cs.Player.AmountOfPower(Powers.Strength);
 
-            if (cs.Player.HasPower("Weakened"))
+            if (cs.Player.HasPower(Powers.Weakened))
             {
                 adjustedDamage = (int)(adjustedDamage * 0.75);
             }
 
-            if (monster.LevelOfPower("Vulnerable") > 0)
+            if (monster.LevelOfPower(Powers.Vulnerable) > 0)
             {
                 adjustedDamage = (int)(adjustedDamage * 1.5);
             }
@@ -171,7 +200,7 @@ namespace SlayTheSpireAi.Common.GameLogic
                 adjustedDamage -= amountBlocked;
             }
 
-            var sharpHide = monster.LevelOfPower("Sharp Hide");
+            var sharpHide = monster.LevelOfPower(Powers.SharpHide);
 
             if (sharpHide > 0)
             {
@@ -182,11 +211,11 @@ namespace SlayTheSpireAi.Common.GameLogic
             {
                 monster.CurrentHp -= adjustedDamage;
 
-                if (monster.LevelOfPower("Curl Up") > 0)
+                if (monster.LevelOfPower(Powers.CurlUp) > 0)
                 {
-                    monster.Block += monster.LevelOfPower("Curl Up");
+                    monster.Block += monster.LevelOfPower(Powers.CurlUp);
 
-                    AdjustPower(monster.Powers, "Curl Up", -1);
+                    AdjustPower(monster.Powers, Powers.CurlUp, -1);
                 }
             }
 

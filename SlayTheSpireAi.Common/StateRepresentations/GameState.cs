@@ -5,6 +5,11 @@ namespace SlayTheSpireAi.Common.StateRepresentations
 {
     public class GameState
     {
+        public GameState()
+        {
+            Deterministic = true;
+        }
+
         [JsonProperty(PropertyName = "choice_list")]
         public string[] ChoiceList { get; set; }
 
@@ -27,6 +32,10 @@ namespace SlayTheSpireAi.Common.StateRepresentations
         public int MaxHp { get; set; }
 
         public List<CardState> Deck { get; set; }
+        /// <summary>
+        /// Tracks whether the changes made to this game state as part of planning were deterministic
+        /// </summary>
+        public bool Deterministic { get; set; }
 
         public GameState Clone()
         {

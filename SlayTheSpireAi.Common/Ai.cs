@@ -165,8 +165,6 @@ namespace SlayTheSpireAi
             }
             else
             {
-                Debugger.Launch();
-
                 Send(new ChooseCommand(null, "Purify"));
             }
 
@@ -546,7 +544,9 @@ namespace SlayTheSpireAi
 
             score -= result.CombatState.Hand.Count(x => x.Id == "Slimed") * 3;
 
-            score += result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower(Powers.Weak) * 5);
+            if (result.CombatState.Player.AmountOfPower(Powers.Juggernaut) > 0) score += 10000;
+
+            score += result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower(Powers.Weakened) * 5);
 
             // A Dazed in the discard pile is less bad than one in the draw pile, because it'll take longer to
             // come around to our hand again.

@@ -12,16 +12,17 @@ namespace SlayTheSpireAi.Common.GameLogic
             new Dictionary<string, ICardImplementation>(StringComparer.InvariantCultureIgnoreCase)
             {
                 // Ironclad
-                { "Defend_R", new DefendImplementation() },
-                { "Strike_R", new StrikeImplementation() },
                 { "Bash", new BashImplementation() },
                 { "Cleave", new CleaveImplementation() },
+                { "Clothesline", new ClotheslineImplementation() },
+                { "Defend_R", new DefendImplementation() },
+                { "Disarm", new DisarmImplementation() },
                 { "Flex", new FlexImplementation() },
+                { "juggernaut", new JuggernautImplementation() },
                 { "Perfected Strike", new PerfectedStrikeImplementation() },
                 { "Reckless Charge", new RecklessChargeImplementation() },
+                { "Strike_R", new StrikeImplementation() },
                 { "Thunderclap", new ThunderclapImplementation() },
-                { "Disarm", new DisarmImplementation() },
-                { "Clothesline", new ClotheslineImplementation() },
                 { "Uppercut", new UppercutImplementation() },
 
                 // Silent

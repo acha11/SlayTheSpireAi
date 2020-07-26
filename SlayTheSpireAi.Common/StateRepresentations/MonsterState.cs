@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -65,6 +66,11 @@ namespace SlayTheSpireAi.Common.StateRepresentations
         public int LevelOfPower(string powerId)
         {
             return Powers.SingleOrDefault(x => x.Id == powerId)?.Amount ?? 0;
+        }
+
+        internal object LevelOfPower(object sharpHide)
+        {
+            throw new NotImplementedException();
         }
     }
 }
