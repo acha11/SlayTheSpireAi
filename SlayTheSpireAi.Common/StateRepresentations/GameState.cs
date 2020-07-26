@@ -21,6 +21,11 @@ namespace SlayTheSpireAi.Common.StateRepresentations
         [JsonProperty(PropertyName = "screen_state")]
         public ScreenState ScreenState { get; set; }
 
+        [JsonProperty(PropertyName = "current_hp")]
+        public int CurrentHp { get; set; }
+        [JsonProperty(PropertyName = "max_hp")]
+        public int MaxHp { get; set; }
+
         public List<CardState> Deck { get; set; }
 
         public GameState Clone()

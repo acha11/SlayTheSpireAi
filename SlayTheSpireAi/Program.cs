@@ -20,7 +20,7 @@ namespace SlayTheSpireAi
 
             try
             {
-                ai.Run();
+                ai.Run("ironclad", 1, "AAA");
             }
             catch (Exception ex)
             {

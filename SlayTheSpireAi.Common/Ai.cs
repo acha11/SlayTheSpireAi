@@ -5,6 +5,7 @@ using SlayTheSpireAi.Common.Commands;
 using SlayTheSpireAi.Common.GameLogic;
 using SlayTheSpireAi.Common.GameLogic.ActionGenerator;
 using SlayTheSpireAi.Common.GameLogic.ActionImplementations;
+using SlayTheSpireAi.Common.Journaling;
 using SlayTheSpireAi.Common.StateRepresentations;
 using SlayTheSpireAi.Infrastructure;
 using System;
@@ -24,6 +25,7 @@ namespace SlayTheSpireAi
         Cards _cardImplementations = new Cards();
         ActionGenerator _actionGenerator;
         IGameConnection _gameConnection;
+        RunRecord _runRecord;
 
         bool _enableCardStatusMarkerFileMaintenance = true;
 
@@ -33,17 +35,27 @@ namespace SlayTheSpireAi
             _actionGenerator = new ActionGenerator(_cardImplementations);
         }
 
-        public void Run()
+        public void Run(string playerClass, int ascensionLevel, string seedAsString)
         {
             _logger.Log("");
             _logger.Log("Starting run");
             _logger.Log("------------");
 
+            _runRecord =
+                new RunRecord()
+                {
+                    StartTime = DateTime.Now,
+                    Character = playerClass,
+                    AscensionLevel = ascensionLevel
+                };
+
             _gameConnection = new StdioConnectionToRealGame(_logger);
 
             Debugger.Launch();
 
-            Send(new StartCommand("ironclad", 1, "AAA"));
+            Send(new StartCommand(playerClass, ascensionLevel, "AAA"));
+
+            _runRecord.Seed = _lastGameStateMessage.GameState.Seed;
 
             if (_lastGameStateMessage?.GameState?.ChoiceList != null)
             {
@@ -90,6 +102,8 @@ namespace SlayTheSpireAi
                 // Run is over
                 _logger.Log("Run over.");
             }
+
+            RunRecordWriter.Write(_runRecord);
         }
 
         private void HandleRestScreen()
@@ -247,6 +261,9 @@ namespace SlayTheSpireAi
         {
             _logger.Log("Starting combat");
 
+            var monsterNamesForJournal = String.Join(", ", _combatState.Monsters.Select(x => x.Name));
+            var beforeHp = _combatState.Player.CurrentHp;
+
             int turnNumber = 0;
 
             while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT" && _lastGameStateMessage?.GameState?.ScreenType != "GAME_OVER")
@@ -258,6 +275,14 @@ namespace SlayTheSpireAi
                 PlannedStrategy();
             }
 
+            var runEvent =
+                new RunEvent()
+                {
+                    MaxHp = _lastGameStateMessage?.GameState?.MaxHp ?? 0,
+                    CurrentHp = _lastGameStateMessage?.GameState?.CurrentHp ?? 0,
+                    Monsters = monsterNamesForJournal,
+                };
+
             // Handle reward (or death?)
             if (_lastGameStateMessage.GameState.RoomPhase == "COMPLETE")
             {
@@ -267,7 +292,7 @@ namespace SlayTheSpireAi
                 // Check the card options
                 Send(new ChooseCommand(choiceName: "card"));
 
-                ChooseAmongstOfferedCards();
+                ChooseAmongstOfferedCards(runEvent);
 
                 Send(new ProceedCommand());
             }
@@ -282,10 +307,16 @@ namespace SlayTheSpireAi
                     throw new Exception("Indeterminate combat outcome.");
                 }
             }
+
+            _runRecord.AddEvent(runEvent);
+
+            RunRecordWriter.Write(_runRecord);
         }
 
-        void ChooseAmongstOfferedCards()
+        void ChooseAmongstOfferedCards(RunEvent runEvent)
         {
+            runEvent.OfferedCards = _lastGameStateMessage.GameState.ChoiceList;
+
             if (_enableCardStatusMarkerFileMaintenance)
             {
                 UpdateCardStatusMarkerFiles();
@@ -311,6 +342,8 @@ namespace SlayTheSpireAi
 
             if (indexOfBestOfferSoFar != -1)
             {
+                runEvent.TakenCard = _lastGameStateMessage.GameState.ChoiceList[indexOfBestOfferSoFar];
+
                 Send(new ChooseCommand(choiceIndex: indexOfBestOfferSoFar));
             }
             else
