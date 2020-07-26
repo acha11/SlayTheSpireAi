@@ -9,24 +9,41 @@ namespace SlayTheSpireAi.Common.GameLogic
 {
     public class GameStateWrapper
     {
-        MonsterState[] _liveMonsters;
         Random _random = new Random();
 
         public GameStateWrapper(GameState gameState, Cards cardImplementations)
         {
             GameState = gameState;
             CardImplementations = cardImplementations;
-
-            _liveMonsters = gameState.CombatState.Monsters.Where(x => !x.IsGone).ToArray();
         }
 
         public GameState GameState { get; }
+
+        public void AddToDiscardPile(CardState cardState)
+        {
+            GameState.CombatState.DiscardPile.Add(cardState);
+        }
+
+        public CardState DuplicateCard(CardState card)
+        {
+            return
+                new CardState()
+                {
+                    Cost = card.Cost,
+                    Exhausts = card.Exhausts,
+                    HasTarget = card.HasTarget,
+                    Id = card.Id,
+                    IsPlayable = card.IsPlayable,
+                    Name = card.Name,
+                    Uuid = Guid.NewGuid()
+                };
+        }
 
         public Cards CardImplementations { get; }
 
         public PlayerState PlayerState { get { return GameState?.CombatState?.Player; } }
 
-        public MonsterState[] LiveMonsters { get { return _liveMonsters; } }
+        public MonsterState[] LiveMonsters { get { return GameState?.CombatState?.Monsters?.Where(x => !x.IsGone).ToArray(); } }
 
         public void ShuffleCardIntoDrawPile(CardState cardState)
         {
@@ -125,7 +142,10 @@ namespace SlayTheSpireAi.Common.GameLogic
 
             if (GameState.CombatState.Player.HasPower(Powers.Juggernaut))
             {
-                GameState.Deterministic = false;
+                if (LiveMonsters.Length > 1)
+                {
+                    GameState.Deterministic = false;
+                }
 
                 MonsterState monster = ChooseRandomMonster();
 
@@ -135,7 +155,12 @@ namespace SlayTheSpireAi.Common.GameLogic
 
         MonsterState ChooseRandomMonster()
         {
-            return _liveMonsters[_random.Next(_liveMonsters.Length)];
+            if (LiveMonsters.Length == 0)
+            {
+                throw new Exception("Can't select a random monster because there are no live monsters.");
+            }
+
+            return LiveMonsters[_random.Next(LiveMonsters.Length)];
         }
 
         public void ApplyPowerToMonster(MonsterState monster, string powerId, int delta)

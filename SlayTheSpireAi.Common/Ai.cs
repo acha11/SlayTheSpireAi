@@ -328,6 +328,9 @@ namespace SlayTheSpireAi
             {
                 var choice = _lastGameStateMessage.GameState.ChoiceList[i];
 
+                // Temporary rule: Don't take a duplicate of a card we already have.
+                if (_lastGameStateMessage.GameState.Deck.Any(x => x.Id == choice)) continue;
+
                 var card = _cardImplementations.GetCardImplementationOrNull(choice);
 
                 if (card != null && card.BaseUtility > bestScoreSoFar)
@@ -482,37 +485,44 @@ namespace SlayTheSpireAi
 
             foreach (var action in actions)
             {
-                var gswClone = gameStateWrapper.Clone();
-
-                action.ApplyTo(_logger, gswClone);
-
-                var sgs =
-                    new ScoredGameState()
-                    {
-                        Precondition = action,
-                        GameState = gswClone.GameState,
-                        Score = ScoreGameState(gswClone.GameState),
-                        Children = new List<ScoredGameState>()
-                    };
-
-                if (float.IsNaN(sgs.Score))
+                try
                 {
-                    Debugger.Break();
-                }
+                    var gswClone = gameStateWrapper.Clone();
 
-                _logger.Log("!".PadLeft(3 * depth) + "Action " + sgs.Precondition.ToString() + ": " + sgs.Score);
+                    action.ApplyTo(_logger, gswClone);
 
-                if (!(action is EndTurnAction))
-                {
-                    var children = EvaluateActionsUnderGameState(ag, gswClone, depth + 1);
+                    var sgs =
+                        new ScoredGameState()
+                        {
+                            Precondition = action,
+                            GameState = gswClone.GameState,
+                            Score = ScoreGameState(gswClone.GameState),
+                            Children = new List<ScoredGameState>()
+                        };
 
-                    foreach (var child in children)
+                    if (float.IsNaN(sgs.Score))
                     {
-                        sgs.Children.Add(child);
+                        Debugger.Break();
                     }
-                }
 
-                scoredGameStates.Add(sgs);
+                    _logger.Log("!".PadLeft(3 * depth) + "Action " + sgs.Precondition.ToString() + ": " + sgs.Score);
+
+                    if (!(action is EndTurnAction) && gswClone.LiveMonsters.Length > 0)
+                    {
+                        var children = EvaluateActionsUnderGameState(ag, gswClone, depth + 1);
+
+                        foreach (var child in children)
+                        {
+                            sgs.Children.Add(child);
+                        }
+                    }
+
+                    scoredGameStates.Add(sgs);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed to evaluate actions under gamestate for action " + action, ex);
+                }
             }
 
             return scoredGameStates;
@@ -543,8 +553,6 @@ namespace SlayTheSpireAi
             score -= result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.CurrentHp);
 
             score -= result.CombatState.Hand.Count(x => x.Id == "Slimed") * 3;
-
-            if (result.CombatState.Player.AmountOfPower(Powers.Juggernaut) > 0) score += 10000;
 
             score += result.CombatState.Monsters.Where(x => !x.IsGone).Sum(x => x.LevelOfPower(Powers.Weakened) * 5);
 

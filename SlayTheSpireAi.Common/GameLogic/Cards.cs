@@ -12,18 +12,21 @@ namespace SlayTheSpireAi.Common.GameLogic
             new Dictionary<string, ICardImplementation>(StringComparer.InvariantCultureIgnoreCase)
             {
                 // Ironclad
+                { "Anger", new AngerImplementation() },
                 { "Bash", new BashImplementation() },
                 { "Cleave", new CleaveImplementation() },
                 { "Clothesline", new ClotheslineImplementation() },
                 { "Defend_R", new DefendImplementation() },
                 { "Disarm", new DisarmImplementation() },
                 { "Flex", new FlexImplementation() },
+                { "heavy strike", new HeavyStrikeImplementation() },
                 { "juggernaut", new JuggernautImplementation() },
                 { "Perfected Strike", new PerfectedStrikeImplementation() },
                 { "Reckless Charge", new RecklessChargeImplementation() },
                 { "Strike_R", new StrikeImplementation() },
                 { "Thunderclap", new ThunderclapImplementation() },
                 { "Uppercut", new UppercutImplementation() },
+                { "wild strike", new WildStrikeImplementation() },
 
                 // Silent
 
@@ -36,7 +39,7 @@ namespace SlayTheSpireAi.Common.GameLogic
                 // Curse
 
                 // Status
-
+                { "Wound", new WoundImplementation() },
                 { "Slimed", new SlimedImplementation() },
             };
 
