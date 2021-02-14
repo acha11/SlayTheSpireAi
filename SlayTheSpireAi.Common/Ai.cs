@@ -53,7 +53,7 @@ namespace SlayTheSpireAi
 
             Debugger.Launch();
 
-            Send(new StartCommand(playerClass, ascensionLevel, "AAA"));
+            Send(new StartCommand(playerClass, ascensionLevel, seedAsString));
 
             _runRecord.Seed = _lastGameStateMessage.GameState.Seed;
 
@@ -264,7 +264,8 @@ namespace SlayTheSpireAi
 
             int turnNumber = 0;
 
-            while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT" && _lastGameStateMessage?.GameState?.ScreenType != "GAME_OVER")
+            while (_lastGameStateMessage?.GameState?.RoomPhase == "COMBAT" &&
+                   _lastGameStateMessage?.GameState?.ScreenType != "GAME_OVER")
             {
                 WaitForMonsterIntentsToBeValid();
 

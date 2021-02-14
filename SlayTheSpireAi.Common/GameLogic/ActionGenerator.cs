@@ -32,7 +32,7 @@ namespace SlayTheSpireAi.Common.GameLogic.ActionGenerator
             actions.Add(new EndTurnAction());
 
             // Can play any held card if we have sufficient energy.
-            // (One day this will change for velvet choker, etc.)
+            // (One day this will change for velvet choker (prevents playing more than 6 cards per turn), etc.)
             foreach (var card in gameState.CombatState.Hand)
             {
                 if (card.Cost > gameState.CombatState.Player.Energy) continue;
@@ -40,6 +40,7 @@ namespace SlayTheSpireAi.Common.GameLogic.ActionGenerator
                 // Can be false if entangled. Might also reflect whether the player has sufficient energy.
                 if (!card.IsPlayable) continue;
 
+                // If the AI doesn't currently understand this card, ignore it
                 if (_cards.GetCardImplementationOrNull(card.Id) == null) continue;
 
                 // Is it a targeted card?
